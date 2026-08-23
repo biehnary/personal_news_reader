@@ -8,6 +8,4 @@ public class NewsItem {
   private String publishedAt;
   private String author;
   private String source;
-
-  public 
 }
