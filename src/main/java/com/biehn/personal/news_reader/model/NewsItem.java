@@ -50,4 +50,12 @@ public class NewsItem {
   public String getSource() {
     return source;
   }
+
+  @Override
+  public String toString() {
+    return "NewsItem{" +
+        "title='" + title + '\'' +
+        ", link='" + link + '\'' +
+        '}' + "\n";
+  }
 }

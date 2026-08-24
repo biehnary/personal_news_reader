@@ -1,3 +1,116 @@
+./test/java/com/biehn/personal/news_reader/NewsReaderApplicationTests.java
+package com.biehn.personal.news_reader;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class NewsReaderApplicationTests {
+
+	@Test
+	void contextLoads() {
+	}
+
+}
+./main/java/com/biehn/personal/news_reader/NewsReaderApplication.java
+package com.biehn.personal.news_reader;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class NewsReaderApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(NewsReaderApplication.class, args);
+	}
+
+}
+./main/java/com/biehn/personal/news_reader/TestRunner.java
+package com.biehn.personal.news_reader;
+
+import com.biehn.personal.news_reader.model.NewsItem;
+import com.biehn.personal.news_reader.service.NewsService;
+import java.util.List;
+import org.springframework.web.client.RestClient;
+
+public class TestRunner {
+
+  public static void main(String[] args) {
+
+    try {
+      RestClient restClient = RestClient.create();
+      NewsService service = new NewsService(restClient);
+      List<NewsItem> news = service.getNews();
+      System.out.println(news);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+}
+./main/java/com/biehn/personal/news_reader/model/NewsItem.java
+package com.biehn.personal.news_reader.model;
+
+public class NewsItem {
+  private String title;
+  private String description;
+  private String link;
+  private String imageUrl;
+  private String publishedAt;
+  private String author;
+  private String source;
+
+
+  public NewsItem(String title, String description, String link, String imageUrl,
+      String publishedAt,
+      String author, String source) {
+    this.title = title;
+    this.description = description;
+    this.link = link;
+    this.imageUrl = imageUrl;
+    this.publishedAt = publishedAt;
+    this.author = author;
+    this.source = source;
+  }
+
+  // getter
+  public String getTitle() {
+    return this.title;
+  }
+
+  public String getAuthor() {
+    return author;
+  }
+
+  public String getDescription() {
+    return description;
+  }
+
+  public String getImageUrl() {
+    return imageUrl;
+  }
+
+  public String getLink() {
+    return link;
+  }
+
+  public String getPublishedAt() {
+    return publishedAt;
+  }
+
+  public String getSource() {
+    return source;
+  }
+
+  @Override
+  public String toString() {
+    return "NewsItem{" +
+        "title='" + title + '\'' +
+        ", link='" + link + '\'' +
+        '}' + "\n";
+  }
+}
+./main/java/com/biehn/personal/news_reader/service/NewsService.java
 package com.biehn.personal.news_reader.service;
 
 import com.biehn.personal.news_reader.model.NewsItem;
