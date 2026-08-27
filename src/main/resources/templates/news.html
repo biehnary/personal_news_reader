@@ -7,7 +7,19 @@
 </head>
 <body>
   <div th:each="news : ${newsList}">
-    <p th:text="${news.title}"></p>
+    <div th:text="${news.source}">Source</div>
+    <a th:href="${news.link}" th:text="${news.title}"></a>
+    <img th:if="${news.imageUrl != null}"
+         th:src="${news.imageUrl}"
+         th:alt="${news.title}"
+             >
+    <div>
+      <span  th:text="${news.publishedAt}">
+      </span>
+      <span th:if="${news.author != null}" th:text="${' / ' + news.author}">
+      </span>
+    </div>
+
   </div>
 </body>
 </html>
