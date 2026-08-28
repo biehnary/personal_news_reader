@@ -15,7 +15,7 @@ public class NewsController {
 
   @GetMapping("/news")
   public String news(Model model) throws Exception{
-    model.addAttribute("newsList",newsService.getNews());
+    model.addAttribute("newsMap",newsService.getNews());
     return "news";
   }
 }

@@ -4,8 +4,9 @@ import com.biehn.personal.news_reader.model.NewsItem;
 import com.biehn.personal.news_reader.source.NewsSource;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -49,21 +50,21 @@ public class NewsService {
     return doc;
   }
 
-  public List<NewsItem> getNews() throws Exception {
-    List<NewsItem> newsItems = new ArrayList<>();
+  public Map<String, List<NewsItem>> getNews() throws Exception {
+    Map<String, List<NewsItem>> newsMap = new HashMap<>();
 
     for (NewsSource newsSource : newsSources) {
       try {
         String xml = fetchRss(newsSource.getRssUrl());
         Document document = parseXml(xml);
-        newsItems.addAll(newsSource.extract(document));
+        newsMap.put(newsSource.getSourceName(), newsSource.extract(document));
       } catch (Exception e) {
         System.out.println("Failed to fetch source: " + newsSource.getRssUrl());
         e.printStackTrace();
         continue;
       }
     }
-    return newsItems;
+    return newsMap;
   }
 }
 

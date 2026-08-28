@@ -13,6 +13,11 @@ import org.w3c.dom.NodeList;
 public class JtbcNewsSource implements NewsSource {
 
   @Override
+  public String getSourceName() {
+    return "JTBC Issues TOP 10";
+  }
+
+  @Override
   public String getRssUrl() {
     return "https://news-ex.jtbc.co.kr/v1/get/rss/issue";
   }
@@ -48,7 +53,7 @@ public class JtbcNewsSource implements NewsSource {
           .item(0)
           .getTextContent();
 
-      NewsItem newsItem = new NewsItem(title, description, link, null, publishedAt, null, "JTBC Issue Top 10");
+      NewsItem newsItem = new NewsItem(title, description, link, null, publishedAt, null, "JTBC");
       newsItems.add(newsItem);
     }
 
