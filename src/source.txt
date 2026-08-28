@@ -12,6 +12,32 @@ class NewsReaderApplicationTests {
 	}
 
 }
+./main/resources/templates/news.html
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Document</title>
+</head>
+<body>
+  <div th:each="news : ${newsList}">
+    <div th:text="${news.source}">Source</div>
+    <a th:href="${news.link}" th:text="${news.title}"></a>
+    <img th:if="${news.imageUrl != null}"
+         th:src="${news.imageUrl}"
+         th:alt="${news.title}"
+             >
+    <div>
+      <span  th:text="${news.publishedAt}">
+      </span>
+      <span th:if="${news.author != null}" th:text="${' / ' + news.author}">
+      </span>
+    </div>
+
+  </div>
+</body>
+</html>
 ./main/java/com/biehn/personal/news_reader/NewsReaderApplication.java
 package com.biehn.personal.news_reader;
 
@@ -40,27 +66,74 @@ public class AppConfig {
     return RestClient.create();
   }
 }
-./main/java/com/biehn/personal/news_reader/TestRunner.java
-package com.biehn.personal.news_reader;
+./main/java/com/biehn/personal/news_reader/source/JtbcNewsSource.java
+package com.biehn.personal.news_reader.source;
 
 import com.biehn.personal.news_reader.model.NewsItem;
-import com.biehn.personal.news_reader.service.NewsService;
+import java.util.ArrayList;
 import java.util.List;
-import org.springframework.web.client.RestClient;
+import org.springframework.stereotype.Component;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
-public class TestRunner {
+@Component
+public class JtbcNewsSource implements NewsSource {
 
-  public static void main(String[] args) {
-
-    try {
-      RestClient restClient = RestClient.create();
-      NewsService service = new NewsService(restClient);
-      List<NewsItem> news = service.getNews();
-      System.out.println(news);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+  @Override
+  public String getRssUrl() {
+    return "https://news-ex.jtbc.co.kr/v1/get/rss/issue";
   }
+
+  @Override
+  public List<NewsItem> extract(Document document) {
+    // item (title, description, link, pubDate)
+    List<NewsItem> newsItems = new ArrayList<>();
+
+    NodeList itemNodes = document.getElementsByTagName("item");
+    for (int i = 0; i < itemNodes.getLength(); i++) {
+      Node itemNode = itemNodes.item(i);
+      // Cast Node to Element to use Element method.
+      Element itemElement = (Element) itemNode;
+      // Extract title. This can be written using method chaining.
+      // String title = itemElement.getElementsByTagName("title").item(0).getTextContent();
+      NodeList titleNodeList = itemElement.getElementsByTagName("title");
+      Node titleNode = titleNodeList.item(0);
+      String title = titleNode.getTextContent();
+
+      String link = itemElement
+          .getElementsByTagName("link")
+          .item(0)
+          .getTextContent();
+
+      String description = itemElement
+          .getElementsByTagName("description")
+          .item(0)
+          .getTextContent();
+
+      String publishedAt = itemElement
+          .getElementsByTagName("pubDate")
+          .item(0)
+          .getTextContent();
+
+      NewsItem newsItem = new NewsItem(title, description, link, null, publishedAt, null, "JTBC Issue Top 10");
+      newsItems.add(newsItem);
+    }
+
+    return newsItems;
+  }
+}
+./main/java/com/biehn/personal/news_reader/source/NewsSource.java
+package com.biehn.personal.news_reader.source;
+
+import com.biehn.personal.news_reader.model.NewsItem;
+import java.util.List;
+import org.w3c.dom.Document;
+
+public interface NewsSource {
+  String getRssUrl();
+  List<NewsItem> extract(Document document);
 }
 ./main/java/com/biehn/personal/news_reader/controller/NewsController.java
 package com.biehn.personal.news_reader.controller;
@@ -150,6 +223,7 @@ public class NewsItem {
 package com.biehn.personal.news_reader.service;
 
 import com.biehn.personal.news_reader.model.NewsItem;
+import com.biehn.personal.news_reader.source.NewsSource;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -160,9 +234,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -170,10 +241,12 @@ import org.xml.sax.SAXException;
 public class NewsService {
 
   private final RestClient restClient;
+  private final List<NewsSource> newsSources;
 
   // spring DI 고려
-  public NewsService(RestClient restClient) {
+  public NewsService(RestClient restClient, List<NewsSource> newsSources) {
     this.restClient = restClient;
+    this.newsSources = newsSources;
   }
 
   // Rss fetch
@@ -187,7 +260,8 @@ public class NewsService {
   }
 
   // xml DOM parser
-  private Document parseXml(String xml) throws ParserConfigurationException, IOException, SAXException {
+  private Document parseXml(String xml)
+      throws ParserConfigurationException, IOException, SAXException {
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     DocumentBuilder builder = factory.newDocumentBuilder();
 
@@ -197,48 +271,22 @@ public class NewsService {
     return doc;
   }
 
-  // Convert DOM nodes to NewsItem Objects.
-  private List<NewsItem> extractJtbcTop10News(Document document) {
+  public List<NewsItem> getNews() throws Exception {
     List<NewsItem> newsItems = new ArrayList<>();
 
-    NodeList itemNodes = document.getElementsByTagName("item");
-    for (int i = 0; i < itemNodes.getLength(); i++) {
-      Node itemNode = itemNodes.item(i);
-      // Cast Node to Element to use Element method.
-      Element itemElement = (Element) itemNode;
-      // Extract title. This can be written using method chaining.
-      // String title = itemElement.getElementsByTagName("title").item(0).getTextContent();
-      NodeList titleNodeList = itemElement.getElementsByTagName("title");
-      Node titleNode = titleNodeList.item(0);
-      String title = titleNode.getTextContent();
-
-      String link = itemElement
-          .getElementsByTagName("link")
-          .item(0)
-          .getTextContent();
-
-      String description = itemElement
-          .getElementsByTagName("description")
-          .item(0)
-          .getTextContent();
-
-      String publishedAt = itemElement
-          .getElementsByTagName("pubDate")
-          .item(0)
-          .getTextContent();
-
-      NewsItem newsItem = new NewsItem(title, description, link, null, publishedAt, null, null);
-      newsItems.add(newsItem);
+    for (NewsSource newsSource : newsSources) {
+      try {
+        String xml = fetchRss(newsSource.getRssUrl());
+        Document document = parseXml(xml);
+        newsItems.addAll(newsSource.extract(document));
+      } catch (Exception e) {
+        System.out.println("Failed to fetch source: " + newsSource.getRssUrl());
+        e.printStackTrace();
+        continue;
+      }
     }
-
     return newsItems;
   }
-
-  public List<NewsItem> getNews() throws Exception {
-
-    String xml = fetchRss("https://news-ex.jtbc.co.kr/v1/get/rss/issue");
-    Document document = parseXml(xml);
-    return extractJtbcTop10News(document);
-  }
 }
+
 
