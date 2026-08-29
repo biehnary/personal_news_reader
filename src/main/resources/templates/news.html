@@ -2,26 +2,31 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta content="width=device-width, initial-scale=1" name="viewport">
   <title>Document</title>
 </head>
 <body>
-  <div th:each="entry : ${newsMap}">
-    <div th:text="${entry.key}">Source</div>
-    <div th:each="value : ${entry.value}">
+<div th:each="entry : ${newsMap}">
+  <div th:text="${entry.key}">Source</div>
+  <div th:each="value : ${entry.value}">
+    <div>
       <a th:href="${value.link}" th:text="${value.title}"></a>
-      <img th:if="${value.imageUrl != null}"
-           th:src="${value.imageUrl}"
-           th:alt="${value.title}"
-      >
-      <div>
-        <span  th:text="${value.publishedAt}">
-        </span>
-        <span th:if="${value.author != null}" th:text="${' / ' + value.author}">
-        </span>
-      </div>
     </div>
-
+    <img style="width: 200px;
+         height: 120px;
+         object-fit: cover;"
+         th:alt="${value.title}"
+         th:if="${value.imageUrl != null}"
+         th:src="${value.imageUrl}"
+    >
+    <div>
+        <span th:text="${value.publishedAt}">
+        </span>
+      <span th:if="${value.author != null}" th:text="${' / ' + value.author}">
+        </span>
+    </div>
   </div>
+
+</div>
 </body>
 </html>

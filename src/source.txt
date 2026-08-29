@@ -21,18 +21,20 @@ class NewsReaderApplicationTests {
   <title>Document</title>
 </head>
 <body>
-  <div th:each="news : ${newsList}">
-    <div th:text="${news.source}">Source</div>
-    <a th:href="${news.link}" th:text="${news.title}"></a>
-    <img th:if="${news.imageUrl != null}"
-         th:src="${news.imageUrl}"
-         th:alt="${news.title}"
-             >
-    <div>
-      <span  th:text="${news.publishedAt}">
-      </span>
-      <span th:if="${news.author != null}" th:text="${' / ' + news.author}">
-      </span>
+  <div th:each="entry : ${newsMap}">
+    <div th:text="${entry.key}">Source</div>
+    <div th:each="value : ${entry.value}">
+      <a th:href="${value.link}" th:text="${value.title}"></a>
+      <img th:if="${value.imageUrl != null}"
+           th:src="${value.imageUrl}"
+           th:alt="${value.title}"
+      >
+      <div>
+        <span  th:text="${value.publishedAt}">
+        </span>
+        <span th:if="${value.author != null}" th:text="${' / ' + value.author}">
+        </span>
+      </div>
     </div>
 
   </div>
@@ -82,6 +84,11 @@ import org.w3c.dom.NodeList;
 public class JtbcNewsSource implements NewsSource {
 
   @Override
+  public String getSourceName() {
+    return "JTBC Issues TOP 10";
+  }
+
+  @Override
   public String getRssUrl() {
     return "https://news-ex.jtbc.co.kr/v1/get/rss/issue";
   }
@@ -117,7 +124,7 @@ public class JtbcNewsSource implements NewsSource {
           .item(0)
           .getTextContent();
 
-      NewsItem newsItem = new NewsItem(title, description, link, null, publishedAt, null, "JTBC Issue Top 10");
+      NewsItem newsItem = new NewsItem(title, description, link, null, publishedAt, null, "JTBC");
       newsItems.add(newsItem);
     }
 
@@ -132,6 +139,7 @@ import java.util.List;
 import org.w3c.dom.Document;
 
 public interface NewsSource {
+  String getSourceName();
   String getRssUrl();
   List<NewsItem> extract(Document document);
 }
@@ -153,7 +161,7 @@ public class NewsController {
 
   @GetMapping("/news")
   public String news(Model model) throws Exception{
-    model.addAttribute("newsList",newsService.getNews());
+    model.addAttribute("newsMap",newsService.getNews());
     return "news";
   }
 }
@@ -226,8 +234,9 @@ import com.biehn.personal.news_reader.model.NewsItem;
 import com.biehn.personal.news_reader.source.NewsSource;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -271,21 +280,21 @@ public class NewsService {
     return doc;
   }
 
-  public List<NewsItem> getNews() throws Exception {
-    List<NewsItem> newsItems = new ArrayList<>();
+  public Map<String, List<NewsItem>> getNews() throws Exception {
+    Map<String, List<NewsItem>> newsMap = new HashMap<>();
 
     for (NewsSource newsSource : newsSources) {
       try {
         String xml = fetchRss(newsSource.getRssUrl());
         Document document = parseXml(xml);
-        newsItems.addAll(newsSource.extract(document));
+        newsMap.put(newsSource.getSourceName(), newsSource.extract(document));
       } catch (Exception e) {
         System.out.println("Failed to fetch source: " + newsSource.getRssUrl());
         e.printStackTrace();
         continue;
       }
     }
-    return newsItems;
+    return newsMap;
   }
 }
 
