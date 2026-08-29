@@ -36,23 +36,29 @@ public class JtbcNewsSource implements NewsSource {
       // String title = itemElement.getElementsByTagName("title").item(0).getTextContent();
       NodeList titleNodeList = itemElement.getElementsByTagName("title");
       Node titleNode = titleNodeList.item(0);
+      if (titleNode == null) {
+        continue;
+      }
       String title = titleNode.getTextContent();
 
-      String link = itemElement
+      Node linkNode = itemElement
           .getElementsByTagName("link")
-          .item(0)
-          .getTextContent();
+          .item(0);
+      if (linkNode == null) {
+        continue;
+      }
+      String link = linkNode.getTextContent();
 
-      String description = itemElement
+      Node descriptionNode = itemElement
           .getElementsByTagName("description")
-          .item(0)
-          .getTextContent();
+          .item(0);
+      String description = descriptionNode == null ? null : descriptionNode.getTextContent();
 
-      String publishedAt = itemElement
+      Node pubDateNode = itemElement
           .getElementsByTagName("pubDate")
-          .item(0)
-          .getTextContent();
-
+          .item(0);
+      String publishedAt = pubDateNode == null ? null : pubDateNode.getTextContent();
+      
       NewsItem newsItem = new NewsItem(title, description, link, null, publishedAt, null, "JTBC");
       newsItems.add(newsItem);
     }
