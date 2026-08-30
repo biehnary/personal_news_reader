@@ -10,59 +10,62 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 @Component
-public class JtbcNewsSource implements NewsSource {
+public class HaniPopularSource implements NewsSource {
 
   @Override
   public String getSourceName() {
-    return "JTBC Issues TOP 10";
+    return "Hani Popular";
   }
 
   @Override
   public String getRssUrl() {
-    return "https://news-ex.jtbc.co.kr/v1/get/rss/issue";
+    return "https://www.hanion.co.kr/rss/clickTop.xml";
   }
 
   @Override
   public List<NewsItem> extract(Document document) {
-    // item (title, description, link, pubDate)
+    //item (title, link, description, pubDate, author)
     List<NewsItem> newsItems = new ArrayList<>();
 
     NodeList itemNodes = document.getElementsByTagName("item");
+
     for (int i = 0; i < itemNodes.getLength(); i++) {
       Node itemNode = itemNodes.item(i);
-      // Cast Node to Element to use Element method.
       Element itemElement = (Element) itemNode;
-      // Extract title. This can be written using method chaining.
-      // String title = itemElement.getElementsByTagName("title").item(0).getTextContent();
-      NodeList titleNodeList = itemElement.getElementsByTagName("title");
-      Node titleNode = titleNodeList.item(0);
+
+      Node titleNode = itemElement.getElementsByTagName("title")
+          .item(0);
       if (titleNode == null) {
         continue;
       }
       String title = titleNode.getTextContent();
 
-      Node linkNode = itemElement
-          .getElementsByTagName("link")
+      Node linkNode = itemElement.getElementsByTagName("link")
           .item(0);
       if (linkNode == null) {
         continue;
       }
       String link = linkNode.getTextContent();
 
-      Node descriptionNode = itemElement
-          .getElementsByTagName("description")
+      Node descriptionNode = itemElement.getElementsByTagName("description")
           .item(0);
       String description = descriptionNode == null ? null : descriptionNode.getTextContent();
 
-      Node pubDateNode = itemElement
-          .getElementsByTagName("pubDate")
+      Node pubDateNode = itemElement.getElementsByTagName("pubDate")
           .item(0);
       String publishedAt = pubDateNode == null ? null : pubDateNode.getTextContent();
 
-      NewsItem newsItem = new NewsItem(title, description, link, null, publishedAt, null, "JTBC");
+      Node authorNode = itemElement.getElementsByTagName("author")
+          .item(0);
+      String author = authorNode == null ? null : authorNode.getTextContent();
+
+      NewsItem newsItem = new NewsItem(title, description, link, null, publishedAt, author,
+          "Hani 한겨레");
+
       newsItems.add(newsItem);
     }
 
     return newsItems;
   }
+
 }
