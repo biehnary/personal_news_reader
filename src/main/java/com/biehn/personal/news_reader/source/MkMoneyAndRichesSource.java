@@ -10,59 +10,69 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 @Component
-public class JtbcNewsSource implements NewsSource {
+public class MkMoneyAndRichesSource implements NewsSource {
 
   @Override
   public String getSourceName() {
-    return "JTBC Issues TOP 10";
+    return "MK Money And Riches";
   }
 
   @Override
   public String getRssUrl() {
-    return "https://news-ex.jtbc.co.kr/v1/get/rss/issue";
+    return "https://www.mk.co.kr/rss/40200003/";
   }
 
   @Override
   public List<NewsItem> extract(Document document) {
-    // item (title, description, link, pubDate)
     List<NewsItem> newsItems = new ArrayList<>();
-
     NodeList itemNodes = document.getElementsByTagName("item");
+
     for (int i = 0; i < itemNodes.getLength(); i++) {
       Node itemNode = itemNodes.item(i);
-      // Cast Node to Element to use Element method.
       Element itemElement = (Element) itemNode;
-      // Extract title. This can be written using method chaining.
-      // String title = itemElement.getElementsByTagName("title").item(0).getTextContent();
-      NodeList titleNodeList = itemElement.getElementsByTagName("title");
-      Node titleNode = titleNodeList.item(0);
+
+      NodeList titleNodes = itemElement.getElementsByTagName("title");
+      Node titleNode = titleNodes
+          .item(0);
       if (titleNode == null) {
         continue;
       }
       String title = titleNode.getTextContent();
 
-      Node linkNode = itemElement
-          .getElementsByTagName("link")
+      Node linkNode = itemElement.getElementsByTagName("link")
           .item(0);
       if (linkNode == null) {
         continue;
       }
       String link = linkNode.getTextContent();
 
-      Node descriptionNode = itemElement
-          .getElementsByTagName("description")
+      Node descriptionNode = itemElement.getElementsByTagName("description")
           .item(0);
       String description = descriptionNode == null ? null : descriptionNode.getTextContent();
 
-      Node pubDateNode = itemElement
-          .getElementsByTagName("pubDate")
+      Node pubDateNode = itemElement.getElementsByTagName("pubDate")
           .item(0);
       String publishedAt = pubDateNode == null ? null : pubDateNode.getTextContent();
 
-      NewsItem newsItem = new NewsItem(title, description, link, null, publishedAt, null, "JTBC Issue Top 10");
+      Node authorNode = itemElement.getElementsByTagName("author")
+          .item(0);
+      String author = authorNode == null ? null : authorNode.getTextContent();
+
+      Node mediaNode = itemElement.getElementsByTagName("media:content")
+          .item(0);
+      Element mediaElement = (Element) mediaNode;
+      String imageUrl = mediaElement == null ? null : mediaElement.getAttribute("url");
+
+      NewsItem newsItem = new NewsItem(title, description, link, imageUrl, publishedAt, author,
+          "MK Money And Riches");
+
       newsItems.add(newsItem);
+
+
     }
 
     return newsItems;
+
+
   }
 }

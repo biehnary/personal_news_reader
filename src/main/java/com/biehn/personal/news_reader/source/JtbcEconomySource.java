@@ -10,16 +10,16 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 @Component
-public class JtbcNewsSource implements NewsSource {
+public class JtbcEconomySource implements NewsSource {
 
   @Override
   public String getSourceName() {
-    return "JTBC Issues TOP 10";
+    return "JTBC Economy";
   }
 
   @Override
   public String getRssUrl() {
-    return "https://news-ex.jtbc.co.kr/v1/get/rss/issue";
+    return "https://news-ex.jtbc.co.kr/v1/get/rss/section/economy";
   }
 
   @Override
@@ -59,7 +59,7 @@ public class JtbcNewsSource implements NewsSource {
           .item(0);
       String publishedAt = pubDateNode == null ? null : pubDateNode.getTextContent();
 
-      NewsItem newsItem = new NewsItem(title, description, link, null, publishedAt, null, "JTBC Issue Top 10");
+      NewsItem newsItem = new NewsItem(title, description, link, null, publishedAt, null, "JTBC Economy");
       newsItems.add(newsItem);
     }
 
