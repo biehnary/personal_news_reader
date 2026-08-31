@@ -24,8 +24,6 @@ public class MkHeadlineSource implements NewsSource {
 
   @Override
   public List<NewsItem> extract(Document document) {
-    //item (title, link, description, pubDate, author, media)
-
     List<NewsItem> newsItems = new ArrayList<>();
     NodeList itemNodes = document.getElementsByTagName("item");
 

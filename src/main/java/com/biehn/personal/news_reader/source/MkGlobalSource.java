@@ -24,7 +24,6 @@ public class MkGlobalSource implements NewsSource {
 
   @Override
   public List<NewsItem> extract(Document document) {
-    //item(title, link, description, pubDate, author, media:content)
     List<NewsItem> newsItems = new ArrayList<>();
 
     NodeList itemNodes = document.getElementsByTagName("item");

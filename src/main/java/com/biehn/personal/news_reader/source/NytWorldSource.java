@@ -10,22 +10,22 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 @Component
-public class HaniPopularSource implements NewsSource {
+public class NytWorldSource implements NewsSource{
 
   @Override
   public String getSourceName() {
-    return "Hani Popular";
+    return "NYT World";
   }
 
   @Override
   public String getRssUrl() {
-    return "https://www.hanion.co.kr/rss/clickTop.xml";
+    return "https://rss.nytimes.com/services/xml/rss/nyt/World.xml";
   }
 
   @Override
   public List<NewsItem> extract(Document document) {
+    // item(title, link, description, dc:creator, pubDate, media:content(url))
     List<NewsItem> newsItems = new ArrayList<>();
-
     NodeList itemNodes = document.getElementsByTagName("item");
 
     for (int i = 0; i < itemNodes.getLength(); i++) {
@@ -50,21 +50,24 @@ public class HaniPopularSource implements NewsSource {
           .item(0);
       String description = descriptionNode == null ? null : descriptionNode.getTextContent();
 
+      Node authorNode = itemElement.getElementsByTagName("dc:creator")
+          .item(0);
+      String author = authorNode == null ? null : authorNode.getTextContent();
+
       Node pubDateNode = itemElement.getElementsByTagName("pubDate")
           .item(0);
       String publishedAt = pubDateNode == null ? null : pubDateNode.getTextContent();
 
-      Node authorNode = itemElement.getElementsByTagName("author")
+      Node mediaNode = itemElement.getElementsByTagName("media:content")
           .item(0);
-      String author = authorNode == null ? null : authorNode.getTextContent();
+      Element mediaElement = (Element) mediaNode;
+      String imageUrl = mediaNode == null ? null : mediaElement.getAttribute("url");
 
-      NewsItem newsItem = new NewsItem(title, description, link, null, publishedAt, author,
-          "Hani 한겨레");
-
+      NewsItem newsItem = new NewsItem(title, description, link, imageUrl, publishedAt, author,
+          "NewYork Times World");
       newsItems.add(newsItem);
     }
 
     return newsItems;
   }
-
 }
