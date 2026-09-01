@@ -18,6 +18,11 @@ public class MkGlobalSource implements NewsSource {
   }
 
   @Override
+  public SourceId getSourceId() {
+    return SourceId.MK_GLOBAL;
+  }
+
+  @Override
   public String getRssUrl() {
     return "https://www.mk.co.kr/rss/30300018/";
   }

@@ -18,6 +18,11 @@ public class JtbcNewsSource implements NewsSource {
   }
 
   @Override
+  public SourceId getSourceId() {
+    return SourceId.JTBC_ISSUE_TOP_10;
+  }
+
+  @Override
   public String getRssUrl() {
     return "https://news-ex.jtbc.co.kr/v1/get/rss/issue";
   }

@@ -18,6 +18,11 @@ public class HankyungEconomySource implements NewsSource {
   }
 
   @Override
+  public SourceId getSourceId() {
+    return SourceId.HANKYUNG_ECONOMY;
+  }
+
+  @Override
   public String getRssUrl() {
     return "https://www.hankyung.com/feed/economy";
   }

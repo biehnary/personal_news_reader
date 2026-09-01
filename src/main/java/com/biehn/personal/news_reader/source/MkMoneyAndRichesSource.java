@@ -18,6 +18,11 @@ public class MkMoneyAndRichesSource implements NewsSource {
   }
 
   @Override
+  public SourceId getSourceId() {
+    return SourceId.MK_MONEY_AND_RICHES;
+  }
+
+  @Override
   public String getRssUrl() {
     return "https://www.mk.co.kr/rss/40200003/";
   }

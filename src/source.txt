@@ -17,27 +17,32 @@ class NewsReaderApplicationTests {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta content="width=device-width, initial-scale=1" name="viewport">
   <title>Document</title>
 </head>
 <body>
-  <div th:each="entry : ${newsMap}">
-    <div th:text="${entry.key}">Source</div>
-    <div th:each="value : ${entry.value}">
+<div th:each="entry : ${newsMap}">
+  <div th:text="${entry.key}">Source</div>
+  <div th:each="value : ${entry.value}">
+    <div>
       <a th:href="${value.link}" th:text="${value.title}"></a>
-      <img th:if="${value.imageUrl != null}"
-           th:src="${value.imageUrl}"
-           th:alt="${value.title}"
-      >
-      <div>
-        <span  th:text="${value.publishedAt}">
-        </span>
-        <span th:if="${value.author != null}" th:text="${' / ' + value.author}">
-        </span>
-      </div>
     </div>
-
+    <img style="width: 200px;
+         height: 120px;
+         object-fit: cover;"
+         th:alt="${value.title}"
+         th:if="${value.imageUrl != null}"
+         th:src="${value.imageUrl}"
+    >
+    <div>
+        <span th:text="${value.publishedAt}">
+        </span>
+      <span th:if="${value.author != null}" th:text="${' / ' + value.author}">
+        </span>
+    </div>
   </div>
+
+</div>
 </body>
 </html>
 ./main/java/com/biehn/personal/news_reader/NewsReaderApplication.java
@@ -66,6 +71,456 @@ public class AppConfig {
   @Bean
   public RestClient restClient() {
     return RestClient.create();
+  }
+}
+./main/java/com/biehn/personal/news_reader/source/MkMoneyAndRichesSource.java
+package com.biehn.personal.news_reader.source;
+
+import com.biehn.personal.news_reader.model.NewsItem;
+import java.util.ArrayList;
+import java.util.List;
+import org.springframework.stereotype.Component;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+@Component
+public class MkMoneyAndRichesSource implements NewsSource {
+
+  @Override
+  public String getSourceName() {
+    return "MK Money And Riches";
+  }
+
+  @Override
+  public String getRssUrl() {
+    return "https://www.mk.co.kr/rss/40200003/";
+  }
+
+  @Override
+  public List<NewsItem> extract(Document document) {
+    List<NewsItem> newsItems = new ArrayList<>();
+    NodeList itemNodes = document.getElementsByTagName("item");
+
+    for (int i = 0; i < itemNodes.getLength(); i++) {
+      Node itemNode = itemNodes.item(i);
+      Element itemElement = (Element) itemNode;
+
+      NodeList titleNodes = itemElement.getElementsByTagName("title");
+      Node titleNode = titleNodes
+          .item(0);
+      if (titleNode == null) {
+        continue;
+      }
+      String title = titleNode.getTextContent();
+
+      Node linkNode = itemElement.getElementsByTagName("link")
+          .item(0);
+      if (linkNode == null) {
+        continue;
+      }
+      String link = linkNode.getTextContent();
+
+      Node descriptionNode = itemElement.getElementsByTagName("description")
+          .item(0);
+      String description = descriptionNode == null ? null : descriptionNode.getTextContent();
+
+      Node pubDateNode = itemElement.getElementsByTagName("pubDate")
+          .item(0);
+      String publishedAt = pubDateNode == null ? null : pubDateNode.getTextContent();
+
+      Node authorNode = itemElement.getElementsByTagName("author")
+          .item(0);
+      String author = authorNode == null ? null : authorNode.getTextContent();
+
+      Node mediaNode = itemElement.getElementsByTagName("media:content")
+          .item(0);
+      Element mediaElement = (Element) mediaNode;
+      String imageUrl = mediaElement == null ? null : mediaElement.getAttribute("url");
+
+      NewsItem newsItem = new NewsItem(title, description, link, imageUrl, publishedAt, author,
+          "MK Money And Riches");
+
+      newsItems.add(newsItem);
+
+
+    }
+
+    return newsItems;
+
+
+  }
+}
+./main/java/com/biehn/personal/news_reader/source/HaniPopularSource.java
+package com.biehn.personal.news_reader.source;
+
+import com.biehn.personal.news_reader.model.NewsItem;
+import java.util.ArrayList;
+import java.util.List;
+import org.springframework.stereotype.Component;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+@Component
+public class HaniPopularSource implements NewsSource {
+
+  @Override
+  public String getSourceName() {
+    return "Hani Popular";
+  }
+
+  @Override
+  public String getRssUrl() {
+    return "https://www.hanion.co.kr/rss/clickTop.xml";
+  }
+
+  @Override
+  public List<NewsItem> extract(Document document) {
+    List<NewsItem> newsItems = new ArrayList<>();
+
+    NodeList itemNodes = document.getElementsByTagName("item");
+
+    for (int i = 0; i < itemNodes.getLength(); i++) {
+      Node itemNode = itemNodes.item(i);
+      Element itemElement = (Element) itemNode;
+
+      Node titleNode = itemElement.getElementsByTagName("title")
+          .item(0);
+      if (titleNode == null) {
+        continue;
+      }
+      String title = titleNode.getTextContent();
+
+      Node linkNode = itemElement.getElementsByTagName("link")
+          .item(0);
+      if (linkNode == null) {
+        continue;
+      }
+      String link = linkNode.getTextContent();
+
+      Node descriptionNode = itemElement.getElementsByTagName("description")
+          .item(0);
+      String description = descriptionNode == null ? null : descriptionNode.getTextContent();
+
+      Node pubDateNode = itemElement.getElementsByTagName("pubDate")
+          .item(0);
+      String publishedAt = pubDateNode == null ? null : pubDateNode.getTextContent();
+
+      Node authorNode = itemElement.getElementsByTagName("author")
+          .item(0);
+      String author = authorNode == null ? null : authorNode.getTextContent();
+
+      NewsItem newsItem = new NewsItem(title, description, link, null, publishedAt, author,
+          "Hani 한겨레");
+
+      newsItems.add(newsItem);
+    }
+
+    return newsItems;
+  }
+
+}
+./main/java/com/biehn/personal/news_reader/source/NytWorldSource.java
+package com.biehn.personal.news_reader.source;
+
+import com.biehn.personal.news_reader.model.NewsItem;
+import java.util.ArrayList;
+import java.util.List;
+import org.springframework.stereotype.Component;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+@Component
+public class NytWorldSource implements NewsSource{
+
+  @Override
+  public String getSourceName() {
+    return "NYT World";
+  }
+
+  @Override
+  public String getRssUrl() {
+    return "https://rss.nytimes.com/services/xml/rss/nyt/World.xml";
+  }
+
+  @Override
+  public List<NewsItem> extract(Document document) {
+    // item(title, link, description, dc:creator, pubDate, media:content(url))
+    List<NewsItem> newsItems = new ArrayList<>();
+    NodeList itemNodes = document.getElementsByTagName("item");
+
+    for (int i = 0; i < itemNodes.getLength(); i++) {
+      Node itemNode = itemNodes.item(i);
+      Element itemElement = (Element) itemNode;
+
+      Node titleNode = itemElement.getElementsByTagName("title")
+          .item(0);
+      if (titleNode == null) {
+        continue;
+      }
+      String title = titleNode.getTextContent();
+
+      Node linkNode = itemElement.getElementsByTagName("link")
+          .item(0);
+      if (linkNode == null) {
+        continue;
+      }
+      String link = linkNode.getTextContent();
+
+      Node descriptionNode = itemElement.getElementsByTagName("description")
+          .item(0);
+      String description = descriptionNode == null ? null : descriptionNode.getTextContent();
+
+      Node authorNode = itemElement.getElementsByTagName("dc:creator")
+          .item(0);
+      String author = authorNode == null ? null : authorNode.getTextContent();
+
+      Node pubDateNode = itemElement.getElementsByTagName("pubDate")
+          .item(0);
+      String publishedAt = pubDateNode == null ? null : pubDateNode.getTextContent();
+
+      Node mediaNode = itemElement.getElementsByTagName("media:content")
+          .item(0);
+      Element mediaElement = (Element) mediaNode;
+      String imageUrl = mediaNode == null ? null : mediaElement.getAttribute("url");
+
+      NewsItem newsItem = new NewsItem(title, description, link, imageUrl, publishedAt, author,
+          "NewYork Times World");
+      newsItems.add(newsItem);
+    }
+
+    return newsItems;
+  }
+}
+./main/java/com/biehn/personal/news_reader/source/MkEconomySource.java
+package com.biehn.personal.news_reader.source;
+
+import com.biehn.personal.news_reader.model.NewsItem;
+import java.util.ArrayList;
+import java.util.List;
+import org.springframework.stereotype.Component;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+@Component
+public class MkEconomySource implements NewsSource {
+
+  @Override
+  public String getSourceName() {
+    return "MK Economy";
+  }
+
+  @Override
+  public String getRssUrl() {
+    return "https://www.mk.co.kr/rss/30100041/";
+  }
+
+  @Override
+  public List<NewsItem> extract(Document document) {
+    List<NewsItem> newsItems = new ArrayList<>();
+    NodeList itemNodes = document.getElementsByTagName("item");
+
+    for (int i = 0; i < itemNodes.getLength(); i++) {
+      Node itemNode = itemNodes.item(i);
+      Element itemElement = (Element) itemNode;
+
+      NodeList titleNodes = itemElement.getElementsByTagName("title");
+      Node titleNode = titleNodes
+          .item(0);
+      if (titleNode == null) {
+        continue;
+      }
+      String title = titleNode.getTextContent();
+
+      Node linkNode = itemElement.getElementsByTagName("link")
+          .item(0);
+      if (linkNode == null) {
+        continue;
+      }
+      String link = linkNode.getTextContent();
+
+      Node descriptionNode = itemElement.getElementsByTagName("description")
+          .item(0);
+      String description = descriptionNode == null ? null : descriptionNode.getTextContent();
+
+      Node pubDateNode = itemElement.getElementsByTagName("pubDate")
+          .item(0);
+      String publishedAt = pubDateNode == null ? null : pubDateNode.getTextContent();
+
+      Node authorNode = itemElement.getElementsByTagName("author")
+          .item(0);
+      String author = authorNode == null ? null : authorNode.getTextContent();
+
+      Node mediaNode = itemElement.getElementsByTagName("media:content")
+          .item(0);
+      Element mediaElement = (Element) mediaNode;
+      String imageUrl = mediaElement == null ? null : mediaElement.getAttribute("url");
+
+      NewsItem newsItem = new NewsItem(title, description, link, imageUrl, publishedAt, author,
+          "MK Economy");
+
+      newsItems.add(newsItem);
+
+
+    }
+
+    return newsItems;
+
+
+  }
+}
+./main/java/com/biehn/personal/news_reader/source/MkGlobalSource.java
+package com.biehn.personal.news_reader.source;
+
+import com.biehn.personal.news_reader.model.NewsItem;
+import java.util.ArrayList;
+import java.util.List;
+import org.springframework.stereotype.Component;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+@Component
+public class MkGlobalSource implements NewsSource {
+
+  @Override
+  public String getSourceName() {
+    return "MK Global";
+  }
+
+  @Override
+  public String getRssUrl() {
+    return "https://www.mk.co.kr/rss/30300018/";
+  }
+
+  @Override
+  public List<NewsItem> extract(Document document) {
+    List<NewsItem> newsItems = new ArrayList<>();
+
+    NodeList itemNodes = document.getElementsByTagName("item");
+
+    for (int i = 0; i < itemNodes.getLength(); i++) {
+      Node itemNode = itemNodes.item(i);
+      Element itemElement = (Element) itemNode;
+      String imageUrl = null;
+
+      Node titleNode = itemElement.getElementsByTagName("title")
+          .item(0);
+      if (titleNode == null) {
+        continue;
+      }
+      String title = titleNode.getTextContent();
+
+      Node linkNode = itemElement.getElementsByTagName("link")
+          .item(0);
+      if (linkNode == null) {
+        continue;
+      }
+      String link = linkNode.getTextContent();
+
+      Node descriptionNode = itemElement.getElementsByTagName("description")
+          .item(0);
+      String description = descriptionNode == null ? null : descriptionNode.getTextContent();
+
+      Node pubDateNode = itemElement.getElementsByTagName("pubDate")
+          .item(0);
+      String publishedAt = pubDateNode == null ? null : pubDateNode.getTextContent();
+
+      Node authorNode = itemElement.getElementsByTagName("author")
+          .item(0);
+      String author = authorNode == null ? null : authorNode.getTextContent();
+
+      Node mediaNode = itemElement.getElementsByTagName("media:content")
+          .item(0);
+      if (mediaNode != null) {
+        Element mediaElement = (Element) mediaNode;
+        imageUrl = mediaElement.getAttribute("url");
+      }
+
+      NewsItem newsItem = new NewsItem(title, description, link, imageUrl, publishedAt, author,
+          "MK Global");
+      newsItems.add(newsItem);
+    }
+
+    return newsItems;
+  }
+}
+./main/java/com/biehn/personal/news_reader/source/HankyungEconomySource.java
+package com.biehn.personal.news_reader.source;
+
+import com.biehn.personal.news_reader.model.NewsItem;
+import java.util.ArrayList;
+import java.util.List;
+import org.springframework.stereotype.Component;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+@Component
+public class HankyungEconomySource implements NewsSource {
+
+  @Override
+  public String getSourceName() {
+    return "HanKyung Economy";
+  }
+
+  @Override
+  public String getRssUrl() {
+    return "https://www.hankyung.com/feed/economy";
+  }
+
+  @Override
+  public List<NewsItem> extract(Document document) {
+    List<NewsItem> newsItems = new ArrayList<>();
+    NodeList itemNodes = document.getElementsByTagName("item");
+
+    for (int i = 0; i < itemNodes.getLength(); i++) {
+      Node itemNode = itemNodes.item(i);
+      Element itemElement = (Element) itemNode;
+
+      NodeList titleNodes = itemElement.getElementsByTagName("title");
+      Node titleNode = titleNodes
+          .item(0);
+      if (titleNode == null) {
+        continue;
+      }
+      String title = titleNode.getTextContent();
+
+      Node linkNode = itemElement.getElementsByTagName("link")
+          .item(0);
+      if (linkNode == null) {
+        continue;
+      }
+      String link = linkNode.getTextContent();
+
+      Node pubDateNode = itemElement.getElementsByTagName("pubDate")
+          .item(0);
+      String publishedAt = pubDateNode == null ? null : pubDateNode.getTextContent();
+
+      Node authorNode = itemElement.getElementsByTagName("author")
+          .item(0);
+      String author = authorNode == null ? null : authorNode.getTextContent();
+
+      NewsItem newsItem = new NewsItem(title, null, link, null, publishedAt, author,
+          "Hankyung Economy");
+
+      newsItems.add(newsItem);
+
+
+    }
+
+    return newsItems;
+
+
   }
 }
 ./main/java/com/biehn/personal/news_reader/source/JtbcNewsSource.java
@@ -107,24 +562,30 @@ public class JtbcNewsSource implements NewsSource {
       // String title = itemElement.getElementsByTagName("title").item(0).getTextContent();
       NodeList titleNodeList = itemElement.getElementsByTagName("title");
       Node titleNode = titleNodeList.item(0);
+      if (titleNode == null) {
+        continue;
+      }
       String title = titleNode.getTextContent();
 
-      String link = itemElement
+      Node linkNode = itemElement
           .getElementsByTagName("link")
-          .item(0)
-          .getTextContent();
+          .item(0);
+      if (linkNode == null) {
+        continue;
+      }
+      String link = linkNode.getTextContent();
 
-      String description = itemElement
+      Node descriptionNode = itemElement
           .getElementsByTagName("description")
-          .item(0)
-          .getTextContent();
+          .item(0);
+      String description = descriptionNode == null ? null : descriptionNode.getTextContent();
 
-      String publishedAt = itemElement
+      Node pubDateNode = itemElement
           .getElementsByTagName("pubDate")
-          .item(0)
-          .getTextContent();
+          .item(0);
+      String publishedAt = pubDateNode == null ? null : pubDateNode.getTextContent();
 
-      NewsItem newsItem = new NewsItem(title, description, link, null, publishedAt, null, "JTBC");
+      NewsItem newsItem = new NewsItem(title, description, link, null, publishedAt, null, "JTBC Issue Top 10");
       newsItems.add(newsItem);
     }
 
@@ -142,6 +603,231 @@ public interface NewsSource {
   String getSourceName();
   String getRssUrl();
   List<NewsItem> extract(Document document);
+}
+./main/java/com/biehn/personal/news_reader/source/MkHeadlineSource.java
+package com.biehn.personal.news_reader.source;
+
+import com.biehn.personal.news_reader.model.NewsItem;
+import java.util.ArrayList;
+import java.util.List;
+import org.springframework.stereotype.Component;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+@Component
+public class MkHeadlineSource implements NewsSource {
+
+  @Override
+  public String getSourceName() {
+    return "MK Headline";
+  }
+
+  @Override
+  public String getRssUrl() {
+    return "https://www.mk.co.kr/rss/30000001/";
+  }
+
+  @Override
+  public List<NewsItem> extract(Document document) {
+    List<NewsItem> newsItems = new ArrayList<>();
+    NodeList itemNodes = document.getElementsByTagName("item");
+
+    for (int i = 0; i < itemNodes.getLength(); i++) {
+      Node itemNode = itemNodes.item(i);
+      Element itemElement = (Element) itemNode;
+
+      NodeList titleNodes = itemElement.getElementsByTagName("title");
+      Node titleNode = titleNodes
+          .item(0);
+      if (titleNode == null) {
+        continue;
+      }
+      String title = titleNode.getTextContent();
+
+      Node linkNode = itemElement.getElementsByTagName("link")
+          .item(0);
+      if (linkNode == null) {
+        continue;
+      }
+      String link = linkNode.getTextContent();
+
+      Node descriptionNode = itemElement.getElementsByTagName("description")
+          .item(0);
+      String description = descriptionNode == null ? null : descriptionNode.getTextContent();
+
+      Node pubDateNode = itemElement.getElementsByTagName("pubDate")
+          .item(0);
+      String publishedAt = pubDateNode == null ? null : pubDateNode.getTextContent();
+
+      Node authorNode = itemElement.getElementsByTagName("author")
+          .item(0);
+      String author = authorNode == null ? null : authorNode.getTextContent();
+
+      Node mediaNode = itemElement.getElementsByTagName("media:content")
+          .item(0);
+      Element mediaElement = (Element) mediaNode;
+      String imageUrl = mediaElement == null ? null : mediaElement.getAttribute("url");
+
+      NewsItem newsItem = new NewsItem(title, description, link, imageUrl, publishedAt, author,
+          "MK");
+
+      newsItems.add(newsItem);
+
+
+    }
+
+    return newsItems;
+  }
+}
+./main/java/com/biehn/personal/news_reader/source/MkRealEstateSource.java
+package com.biehn.personal.news_reader.source;
+
+import com.biehn.personal.news_reader.model.NewsItem;
+import java.util.ArrayList;
+import java.util.List;
+import org.springframework.stereotype.Component;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+@Component
+public class MkRealEstateSource implements NewsSource {
+
+  @Override
+  public String getSourceName() {
+    return "MK Real Estate";
+  }
+
+  @Override
+  public String getRssUrl() {
+    return "https://www.mk.co.kr/rss/50300009/";
+  }
+
+  @Override
+  public List<NewsItem> extract(Document document) {
+    List<NewsItem> newsItems = new ArrayList<>();
+    NodeList itemNodes = document.getElementsByTagName("item");
+
+    for (int i = 0; i < itemNodes.getLength(); i++) {
+      Node itemNode = itemNodes.item(i);
+      Element itemElement = (Element) itemNode;
+
+      NodeList titleNodes = itemElement.getElementsByTagName("title");
+      Node titleNode = titleNodes
+          .item(0);
+      if (titleNode == null) {
+        continue;
+      }
+      String title = titleNode.getTextContent();
+
+      Node linkNode = itemElement.getElementsByTagName("link")
+          .item(0);
+      if (linkNode == null) {
+        continue;
+      }
+      String link = linkNode.getTextContent();
+
+      Node descriptionNode = itemElement.getElementsByTagName("description")
+          .item(0);
+      String description = descriptionNode == null ? null : descriptionNode.getTextContent();
+
+      Node pubDateNode = itemElement.getElementsByTagName("pubDate")
+          .item(0);
+      String publishedAt = pubDateNode == null ? null : pubDateNode.getTextContent();
+
+      Node authorNode = itemElement.getElementsByTagName("author")
+          .item(0);
+      String author = authorNode == null ? null : authorNode.getTextContent();
+
+      Node mediaNode = itemElement.getElementsByTagName("media:content")
+          .item(0);
+      Element mediaElement = (Element) mediaNode;
+      String imageUrl = mediaElement == null ? null : mediaElement.getAttribute("url");
+
+      NewsItem newsItem = new NewsItem(title, description, link, imageUrl, publishedAt, author,
+          "MK Real Estate");
+
+      newsItems.add(newsItem);
+
+
+    }
+
+    return newsItems;
+
+
+  }
+}
+./main/java/com/biehn/personal/news_reader/source/JtbcEconomySource.java
+package com.biehn.personal.news_reader.source;
+
+import com.biehn.personal.news_reader.model.NewsItem;
+import java.util.ArrayList;
+import java.util.List;
+import org.springframework.stereotype.Component;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+@Component
+public class JtbcEconomySource implements NewsSource {
+
+  @Override
+  public String getSourceName() {
+    return "JTBC Economy";
+  }
+
+  @Override
+  public String getRssUrl() {
+    return "https://news-ex.jtbc.co.kr/v1/get/rss/section/economy";
+  }
+
+  @Override
+  public List<NewsItem> extract(Document document) {
+    // item (title, description, link, pubDate)
+    List<NewsItem> newsItems = new ArrayList<>();
+
+    NodeList itemNodes = document.getElementsByTagName("item");
+    for (int i = 0; i < itemNodes.getLength(); i++) {
+      Node itemNode = itemNodes.item(i);
+      // Cast Node to Element to use Element method.
+      Element itemElement = (Element) itemNode;
+      // Extract title. This can be written using method chaining.
+      // String title = itemElement.getElementsByTagName("title").item(0).getTextContent();
+      NodeList titleNodeList = itemElement.getElementsByTagName("title");
+      Node titleNode = titleNodeList.item(0);
+      if (titleNode == null) {
+        continue;
+      }
+      String title = titleNode.getTextContent();
+
+      Node linkNode = itemElement
+          .getElementsByTagName("link")
+          .item(0);
+      if (linkNode == null) {
+        continue;
+      }
+      String link = linkNode.getTextContent();
+
+      Node descriptionNode = itemElement
+          .getElementsByTagName("description")
+          .item(0);
+      String description = descriptionNode == null ? null : descriptionNode.getTextContent();
+
+      Node pubDateNode = itemElement
+          .getElementsByTagName("pubDate")
+          .item(0);
+      String publishedAt = pubDateNode == null ? null : pubDateNode.getTextContent();
+
+      NewsItem newsItem = new NewsItem(title, description, link, null, publishedAt, null, "JTBC Economy");
+      newsItems.add(newsItem);
+    }
+
+    return newsItems;
+  }
 }
 ./main/java/com/biehn/personal/news_reader/controller/NewsController.java
 package com.biehn.personal.news_reader.controller;
@@ -234,12 +920,15 @@ import com.biehn.personal.news_reader.model.NewsItem;
 import com.biehn.personal.news_reader.source.NewsSource;
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.w3c.dom.Document;
@@ -260,12 +949,21 @@ public class NewsService {
 
   // Rss fetch
   private String fetchRss(String url) {
-    String xml = restClient.get()
+    return restClient.get()
         .uri(url)
-        .retrieve()
-        .body(String.class);
+        .exchange((request, response) -> {
+          MediaType contentType = response.getHeaders().getContentType();
+          Charset charset = contentType == null ? null : contentType.getCharset();
 
-    return xml;
+          if (charset == null) {
+            charset = StandardCharsets.UTF_8;
+          }
+
+          byte[] body = response.getBody().readAllBytes();
+
+          return new String(body, charset);
+        });
+
   }
 
   // xml DOM parser

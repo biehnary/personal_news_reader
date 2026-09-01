@@ -1,0 +1,22 @@
+news:
+  sources:
+    - id: MK_HEADLINE
+      display-order: 1
+    - id: JTBC_ISSUE_TOP_10
+      display-order: 2
+    - id: HANI_POPULAR
+      display-order: 3
+    - id: MK_GLOBAL
+      display-order: 4
+    - id: NYT_WORLD
+      display-order: 5
+    - id: MK_ECONOMY
+      display-order: 6
+    - id: MK_MONEY_AND_RICHES
+      display-order: 7
+    - id: JTBC_ECONOMY
+      display-order: 8
+    - id: HANKYUNG_ECONOMY
+      display-order: 9
+    - id: MK_REAL_ESTATE
+      display-order: 10

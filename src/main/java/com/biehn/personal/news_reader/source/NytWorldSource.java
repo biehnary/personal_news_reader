@@ -18,6 +18,11 @@ public class NytWorldSource implements NewsSource{
   }
 
   @Override
+  public SourceId getSourceId() {
+    return SourceId.NYT_WORLD;
+  }
+
+  @Override
   public String getRssUrl() {
     return "https://rss.nytimes.com/services/xml/rss/nyt/World.xml";
   }

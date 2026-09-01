@@ -1,7 +1,10 @@
 package com.biehn.personal.news_reader.service;
 
+import com.biehn.personal.news_reader.config.NewsProperties;
+import com.biehn.personal.news_reader.config.NewsProperties.SourceConfig;
 import com.biehn.personal.news_reader.model.NewsItem;
 import com.biehn.personal.news_reader.source.NewsSource;
+import com.biehn.personal.news_reader.source.SourceId;
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.Charset;
@@ -24,12 +27,27 @@ public class NewsService {
 
   private final RestClient restClient;
   private final List<NewsSource> newsSources;
+  private final NewsProperties newsProperties;
 
   // spring DI 고려
-  public NewsService(RestClient restClient, List<NewsSource> newsSources) {
+  public NewsService(RestClient restClient, List<NewsSource> newsSources,
+      NewsProperties newsProperties) {
     this.restClient = restClient;
     this.newsSources = newsSources;
+    this.newsProperties = newsProperties;
+
   }
+
+  Map<SourceId, SourceConfig> buildConfigLookup (){
+    Map<SourceId, SourceConfig> configMap = new HashMap<>();
+    for (SourceConfig source : newsProperties.getSources()) {
+      configMap.put(source.getId(), source);
+    }
+    return configMap;
+  }
+
+
+
 
   // Rss fetch
   private String fetchRss(String url) {

@@ -18,6 +18,11 @@ public class MkRealEstateSource implements NewsSource {
   }
 
   @Override
+  public SourceId getSourceId() {
+    return SourceId.MK_REAL_ESTATE;
+  }
+
+  @Override
   public String getRssUrl() {
     return "https://www.mk.co.kr/rss/50300009/";
   }

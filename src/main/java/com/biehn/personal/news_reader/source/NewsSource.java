@@ -6,6 +6,7 @@ import org.w3c.dom.Document;
 
 public interface NewsSource {
   String getSourceName();
+  SourceId getSourceId();
   String getRssUrl();
   List<NewsItem> extract(Document document);
 }

@@ -18,6 +18,11 @@ public class MkEconomySource implements NewsSource {
   }
 
   @Override
+  public SourceId getSourceId() {
+    return SourceId.MK_ECONOMY;
+  }
+
+  @Override
   public String getRssUrl() {
     return "https://www.mk.co.kr/rss/30100041/";
   }

@@ -18,6 +18,11 @@ public class MkHeadlineSource implements NewsSource {
   }
 
   @Override
+  public SourceId getSourceId() {
+    return SourceId.MK_HEADLINE;
+  }
+
+  @Override
   public String getRssUrl() {
     return "https://www.mk.co.kr/rss/30000001/";
   }

@@ -18,6 +18,11 @@ public class HaniPopularSource implements NewsSource {
   }
 
   @Override
+  public SourceId getSourceId() {
+    return SourceId.HANI_POPULAR;
+  }
+
+  @Override
   public String getRssUrl() {
     return "https://www.hanion.co.kr/rss/clickTop.xml";
   }

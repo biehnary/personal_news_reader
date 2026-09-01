@@ -18,6 +18,11 @@ public class JtbcEconomySource implements NewsSource {
   }
 
   @Override
+  public SourceId getSourceId() {
+    return SourceId.JTBC_ECONOMY;
+  }
+
+  @Override
   public String getRssUrl() {
     return "https://news-ex.jtbc.co.kr/v1/get/rss/section/economy";
   }
