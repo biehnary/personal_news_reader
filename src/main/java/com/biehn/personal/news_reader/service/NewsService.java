@@ -9,7 +9,10 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import javax.xml.parsers.DocumentBuilder;
@@ -46,7 +49,19 @@ public class NewsService {
     return configMap;
   }
 
+  List<NewsSource> sortNewsSources () {
+    Map<SourceId, SourceConfig> configMap = buildConfigLookup();
 
+    Comparator<NewsSource> newsSourceComparator = Comparator.comparingInt((NewsSource source) -> {
+      SourceConfig sourceConfig = configMap.get(source.getSourceId());
+      return sourceConfig.getDisplayOrder();
+    });
+
+    List<NewsSource> sortedList = new ArrayList<>(newsSources);
+    sortedList.sort(newsSourceComparator);
+
+    return sortedList;
+  }
 
 
   // Rss fetch
@@ -81,9 +96,9 @@ public class NewsService {
   }
 
   public Map<String, List<NewsItem>> getNews() throws Exception {
-    Map<String, List<NewsItem>> newsMap = new HashMap<>();
+    Map<String, List<NewsItem>> newsMap = new LinkedHashMap<>();
 
-    for (NewsSource newsSource : newsSources) {
+    for (NewsSource newsSource : sortNewsSources()) {
       try {
         String xml = fetchRss(newsSource.getRssUrl());
         Document document = parseXml(xml);
