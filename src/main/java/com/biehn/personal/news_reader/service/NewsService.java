@@ -2,7 +2,10 @@ package com.biehn.personal.news_reader.service;
 
 import com.biehn.personal.news_reader.config.NewsProperties;
 import com.biehn.personal.news_reader.config.NewsProperties.SourceConfig;
+import com.biehn.personal.news_reader.config.Section;
 import com.biehn.personal.news_reader.model.NewsItem;
+import com.biehn.personal.news_reader.model.NewsSourceViewModel;
+import com.biehn.personal.news_reader.model.SectionViewModel;
 import com.biehn.personal.news_reader.source.NewsSource;
 import com.biehn.personal.news_reader.source.SourceId;
 import java.io.IOException;
@@ -41,7 +44,7 @@ public class NewsService {
 
   }
 
-  Map<SourceId, SourceConfig> buildConfigLookup (){
+  Map<SourceId, SourceConfig> buildConfigLookup() {
     Map<SourceId, SourceConfig> configMap = new HashMap<>();
     for (SourceConfig source : newsProperties.getSources()) {
       configMap.put(source.getId(), source);
@@ -49,7 +52,7 @@ public class NewsService {
     return configMap;
   }
 
-  List<NewsSource> sortNewsSources () {
+  List<NewsSource> sortNewsSources() {
     Map<SourceId, SourceConfig> configMap = buildConfigLookup();
 
     Comparator<NewsSource> newsSourceComparator = Comparator.comparingInt((NewsSource source) -> {
@@ -95,21 +98,41 @@ public class NewsService {
     return doc;
   }
 
-  public Map<String, List<NewsItem>> getNews() throws Exception {
-    Map<String, List<NewsItem>> newsMap = new LinkedHashMap<>();
+  public List<SectionViewModel> getNews() throws Exception {
+    Map<SourceId, SourceConfig> configMap = buildConfigLookup();
+    Map<Section, List<NewsSourceViewModel>> sectionListMap = new HashMap<>();
+    List<SectionViewModel> sectionViewModels = new ArrayList<>();
 
     for (NewsSource newsSource : sortNewsSources()) {
+
       try {
         String xml = fetchRss(newsSource.getRssUrl());
         Document document = parseXml(xml);
-        newsMap.put(newsSource.getSourceName(), newsSource.extract(document));
+        List<NewsItem> newsItems = newsSource.extract(document);
+
+        SourceConfig sourceConfig = configMap.get(newsSource.getSourceId());
+        Section section = sourceConfig.getSection();
+
+        NewsSourceViewModel newsSourceViewModel = new NewsSourceViewModel(
+            newsSource.getSourceName(), newsItems);
+
+        sectionListMap.computeIfAbsent(section, sectionAsKey -> new ArrayList<>()).add(newsSourceViewModel);
+
       } catch (Exception e) {
         System.out.println("Failed to fetch source: " + newsSource.getRssUrl());
         e.printStackTrace();
         continue;
       }
     }
-    return newsMap;
+
+    for (Map.Entry<Section, List<NewsSourceViewModel>> entry : sectionListMap.entrySet()) {
+      SectionViewModel sectionViewModel =
+          new SectionViewModel(entry.getKey(), entry.getValue());
+
+      sectionViewModels.add(sectionViewModel);
+    }
+
+    return sectionViewModels;
   }
 }
 

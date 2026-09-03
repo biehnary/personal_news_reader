@@ -22,6 +22,7 @@ public class NewsProperties {
   public static class SourceConfig {
     SourceId id;
     int displayOrder;
+    Section section;
 
     public SourceId getId() {
       return id;
@@ -37,6 +38,14 @@ public class NewsProperties {
 
     public void setDisplayOrder(int displayOrder) {
       this.displayOrder = displayOrder;
+    }
+
+    public Section getSection() {
+      return section;
+    }
+
+    public void setSection(Section section) {
+      this.section = section;
     }
   }
 

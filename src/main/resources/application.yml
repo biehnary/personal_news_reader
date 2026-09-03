@@ -2,21 +2,41 @@ news:
   sources:
     - id: MK_HEADLINE
       display-order: 1
+      section: "NEWS"
+
     - id: JTBC_ISSUE_TOP_10
       display-order: 2
+      section: NEWS
+
     - id: HANI_POPULAR
       display-order: 3
+      section: NEWS
+
     - id: MK_GLOBAL
       display-order: 4
+      section: NEWS
+
     - id: NYT_WORLD
       display-order: 5
+      section: NEWS
+
     - id: MK_ECONOMY
       display-order: 6
+      section: ECONOMY
+
     - id: MK_MONEY_AND_RICHES
       display-order: 7
+      section: ECONOMY
+
     - id: JTBC_ECONOMY
       display-order: 8
+      section: ECONOMY
+
     - id: HANKYUNG_ECONOMY
       display-order: 9
+      section: ECONOMY
+
     - id: MK_REAL_ESTATE
       display-order: 10
+      section: ECONOMY
+

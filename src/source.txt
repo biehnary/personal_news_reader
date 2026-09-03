@@ -45,6 +45,49 @@ class NewsReaderApplicationTests {
 </div>
 </body>
 </html>
+./main/resources/application.yml
+news:
+  sources:
+    - id: MK_HEADLINE
+      display-order: 1
+      section: "News"
+
+    - id: JTBC_ISSUE_TOP_10
+      display-order: 2
+      section: "News"
+
+    - id: HANI_POPULAR
+      display-order: 3
+      section: "News"
+
+    - id: MK_GLOBAL
+      display-order: 4
+      section: "News"
+
+    - id: NYT_WORLD
+      display-order: 5
+      section: "News"
+
+    - id: MK_ECONOMY
+      display-order: 6
+      section: "Economy"
+
+    - id: MK_MONEY_AND_RICHES
+      display-order: 7
+      section: "Economy"
+
+    - id: JTBC_ECONOMY
+      display-order: 8
+      section: "Economy"
+
+    - id: HANKYUNG_ECONOMY
+      display-order: 9
+      section: "Economy"
+
+    - id: MK_REAL_ESTATE
+      display-order: 10
+      section: "Economy"
+
 ./main/java/com/biehn/personal/news_reader/NewsReaderApplication.java
 package com.biehn.personal.news_reader;
 
@@ -59,13 +102,70 @@ public class NewsReaderApplication {
 	}
 
 }
+./main/java/com/biehn/personal/news_reader/config/NewsProperties.java
+package com.biehn.personal.news_reader.config;
+
+import com.biehn.personal.news_reader.source.SourceId;
+import java.util.ArrayList;
+import java.util.List;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
+@ConfigurationProperties("news")
+public class NewsProperties {
+
+  List<SourceConfig> sources = new ArrayList<>();
+
+  public List<SourceConfig> getSources() {
+    return sources;
+  }
+
+  public void setSources(
+      List<SourceConfig> sources) {
+    this.sources = sources;
+  }
+
+  public static class SourceConfig {
+    SourceId id;
+    int displayOrder;
+    String section;
+
+    public SourceId getId() {
+      return id;
+    }
+
+    public int getDisplayOrder() {
+      return displayOrder;
+    }
+
+    public void setId(SourceId id) {
+      this.id = id;
+    }
+
+    public void setDisplayOrder(int displayOrder) {
+      this.displayOrder = displayOrder;
+    }
+
+    public String getSection() {
+      return section;
+    }
+
+    public void setSection(String section) {
+      this.section = section;
+    }
+  }
+
+
+
+}
 ./main/java/com/biehn/personal/news_reader/config/AppConfig.java
 package com.biehn.personal.news_reader.config;
 
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.client.RestClient;
 
 @org.springframework.context.annotation.Configuration
+@EnableConfigurationProperties(NewsProperties.class)
 public class AppConfig {
 
   @Bean
@@ -91,6 +191,11 @@ public class MkMoneyAndRichesSource implements NewsSource {
   @Override
   public String getSourceName() {
     return "MK Money And Riches";
+  }
+
+  @Override
+  public SourceId getSourceId() {
+    return SourceId.MK_MONEY_AND_RICHES;
   }
 
   @Override
@@ -173,6 +278,11 @@ public class HaniPopularSource implements NewsSource {
   }
 
   @Override
+  public SourceId getSourceId() {
+    return SourceId.HANI_POPULAR;
+  }
+
+  @Override
   public String getRssUrl() {
     return "https://www.hanion.co.kr/rss/clickTop.xml";
   }
@@ -244,6 +354,11 @@ public class NytWorldSource implements NewsSource{
   }
 
   @Override
+  public SourceId getSourceId() {
+    return SourceId.NYT_WORLD;
+  }
+
+  @Override
   public String getRssUrl() {
     return "https://rss.nytimes.com/services/xml/rss/nyt/World.xml";
   }
@@ -297,6 +412,21 @@ public class NytWorldSource implements NewsSource{
     return newsItems;
   }
 }
+./main/java/com/biehn/personal/news_reader/source/SourceId.java
+package com.biehn.personal.news_reader.source;
+
+public enum SourceId {
+  MK_HEADLINE,
+  JTBC_ISSUE_TOP_10,
+  HANI_POPULAR,
+  MK_GLOBAL,
+  NYT_WORLD,
+  MK_ECONOMY,
+  MK_MONEY_AND_RICHES,
+  JTBC_ECONOMY,
+  HANKYUNG_ECONOMY,
+  MK_REAL_ESTATE
+}
 ./main/java/com/biehn/personal/news_reader/source/MkEconomySource.java
 package com.biehn.personal.news_reader.source;
 
@@ -315,6 +445,11 @@ public class MkEconomySource implements NewsSource {
   @Override
   public String getSourceName() {
     return "MK Economy";
+  }
+
+  @Override
+  public SourceId getSourceId() {
+    return SourceId.MK_ECONOMY;
   }
 
   @Override
@@ -397,6 +532,11 @@ public class MkGlobalSource implements NewsSource {
   }
 
   @Override
+  public SourceId getSourceId() {
+    return SourceId.MK_GLOBAL;
+  }
+
+  @Override
   public String getRssUrl() {
     return "https://www.mk.co.kr/rss/30300018/";
   }
@@ -474,6 +614,11 @@ public class HankyungEconomySource implements NewsSource {
   }
 
   @Override
+  public SourceId getSourceId() {
+    return SourceId.HANKYUNG_ECONOMY;
+  }
+
+  @Override
   public String getRssUrl() {
     return "https://www.hankyung.com/feed/economy";
   }
@@ -544,6 +689,11 @@ public class JtbcNewsSource implements NewsSource {
   }
 
   @Override
+  public SourceId getSourceId() {
+    return SourceId.JTBC_ISSUE_TOP_10;
+  }
+
+  @Override
   public String getRssUrl() {
     return "https://news-ex.jtbc.co.kr/v1/get/rss/issue";
   }
@@ -601,6 +751,7 @@ import org.w3c.dom.Document;
 
 public interface NewsSource {
   String getSourceName();
+  SourceId getSourceId();
   String getRssUrl();
   List<NewsItem> extract(Document document);
 }
@@ -622,6 +773,11 @@ public class MkHeadlineSource implements NewsSource {
   @Override
   public String getSourceName() {
     return "MK Headline";
+  }
+
+  @Override
+  public SourceId getSourceId() {
+    return SourceId.MK_HEADLINE;
   }
 
   @Override
@@ -702,6 +858,11 @@ public class MkRealEstateSource implements NewsSource {
   }
 
   @Override
+  public SourceId getSourceId() {
+    return SourceId.MK_REAL_ESTATE;
+  }
+
+  @Override
   public String getRssUrl() {
     return "https://www.mk.co.kr/rss/50300009/";
   }
@@ -778,6 +939,11 @@ public class JtbcEconomySource implements NewsSource {
   @Override
   public String getSourceName() {
     return "JTBC Economy";
+  }
+
+  @Override
+  public SourceId getSourceId() {
+    return SourceId.JTBC_ECONOMY;
   }
 
   @Override
@@ -916,13 +1082,19 @@ public class NewsItem {
 ./main/java/com/biehn/personal/news_reader/service/NewsService.java
 package com.biehn.personal.news_reader.service;
 
+import com.biehn.personal.news_reader.config.NewsProperties;
+import com.biehn.personal.news_reader.config.NewsProperties.SourceConfig;
 import com.biehn.personal.news_reader.model.NewsItem;
 import com.biehn.personal.news_reader.source.NewsSource;
+import com.biehn.personal.news_reader.source.SourceId;
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import javax.xml.parsers.DocumentBuilder;
@@ -940,12 +1112,39 @@ public class NewsService {
 
   private final RestClient restClient;
   private final List<NewsSource> newsSources;
+  private final NewsProperties newsProperties;
 
   // spring DI 고려
-  public NewsService(RestClient restClient, List<NewsSource> newsSources) {
+  public NewsService(RestClient restClient, List<NewsSource> newsSources,
+      NewsProperties newsProperties) {
     this.restClient = restClient;
     this.newsSources = newsSources;
+    this.newsProperties = newsProperties;
+
   }
+
+  Map<SourceId, SourceConfig> buildConfigLookup (){
+    Map<SourceId, SourceConfig> configMap = new HashMap<>();
+    for (SourceConfig source : newsProperties.getSources()) {
+      configMap.put(source.getId(), source);
+    }
+    return configMap;
+  }
+
+  List<NewsSource> sortNewsSources () {
+    Map<SourceId, SourceConfig> configMap = buildConfigLookup();
+
+    Comparator<NewsSource> newsSourceComparator = Comparator.comparingInt((NewsSource source) -> {
+      SourceConfig sourceConfig = configMap.get(source.getSourceId());
+      return sourceConfig.getDisplayOrder();
+    });
+
+    List<NewsSource> sortedList = new ArrayList<>(newsSources);
+    sortedList.sort(newsSourceComparator);
+
+    return sortedList;
+  }
+
 
   // Rss fetch
   private String fetchRss(String url) {
@@ -979,9 +1178,9 @@ public class NewsService {
   }
 
   public Map<String, List<NewsItem>> getNews() throws Exception {
-    Map<String, List<NewsItem>> newsMap = new HashMap<>();
+    Map<String, List<NewsItem>> newsMap = new LinkedHashMap<>();
 
-    for (NewsSource newsSource : newsSources) {
+    for (NewsSource newsSource : sortNewsSources()) {
       try {
         String xml = fetchRss(newsSource.getRssUrl());
         Document document = parseXml(xml);
