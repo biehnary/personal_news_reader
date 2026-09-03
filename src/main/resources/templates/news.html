@@ -6,27 +6,27 @@
   <title>Document</title>
 </head>
 <body>
-<div th:each="entry : ${newsMap}">
-  <div th:text="${entry.key}">Source</div>
-  <div th:each="value : ${entry.value}">
-    <div>
-      <a th:href="${value.link}" th:text="${value.title}"></a>
-    </div>
-    <img style="width: 200px;
+<div th:each="sectionViewModel : ${sectionViewModels}">
+  <div th:text="${sectionViewModel.section}">Section</div>
+  <div th:each="newsSourceViewModel : ${sectionViewModel.newsSourceViewModels}">
+    <div th:text="${newsSourceViewModel.sourceName}">SourceName</div>
+    <div th:each="newsItem:${newsSourceViewModel.newsItems}">
+      <div>
+        <a th:href="${newsItem.link}" th:text="${newsItem.title}"></a>
+      </div>
+      <img style="width: 200px;
          height: 120px;
          object-fit: cover;"
-         th:alt="${value.title}"
-         th:if="${value.imageUrl != null}"
-         th:src="${value.imageUrl}"
-    >
-    <div>
-        <span th:text="${value.publishedAt}">
-        </span>
-      <span th:if="${value.author != null}" th:text="${' / ' + value.author}">
-        </span>
+           th:alt="${newsItem.title}"
+           th:if="${newsItem.imageUrl != null}"
+           th:src="${newsItem.imageUrl}"
+      >
+      <div>
+        <span th:text="${newsItem.publishedAt}"></span>
+        <span th:if="${newsItem.author != null}" th:text="${' / ' + newsItem.author}"></span>
+      </div>
     </div>
-  </div>
-
+    </div>
 </div>
 </body>
 </html>
