@@ -21,27 +21,27 @@ class NewsReaderApplicationTests {
   <title>Document</title>
 </head>
 <body>
-<div th:each="entry : ${newsMap}">
-  <div th:text="${entry.key}">Source</div>
-  <div th:each="value : ${entry.value}">
-    <div>
-      <a th:href="${value.link}" th:text="${value.title}"></a>
-    </div>
-    <img style="width: 200px;
+<div th:each="sectionViewModel : ${sectionViewModels}">
+  <div th:text="${sectionViewModel.section}">Section</div>
+  <div th:each="newsSourceViewModel : ${sectionViewModel.newsSourceViewModels}">
+    <div th:text="${newsSourceViewModel.sourceName}">SourceName</div>
+    <div th:each="newsItem:${newsSourceViewModel.newsItems}">
+      <div>
+        <a th:href="${newsItem.link}" th:text="${newsItem.title}"></a>
+      </div>
+      <img style="width: 200px;
          height: 120px;
          object-fit: cover;"
-         th:alt="${value.title}"
-         th:if="${value.imageUrl != null}"
-         th:src="${value.imageUrl}"
-    >
-    <div>
-        <span th:text="${value.publishedAt}">
-        </span>
-      <span th:if="${value.author != null}" th:text="${' / ' + value.author}">
-        </span>
+           th:alt="${newsItem.title}"
+           th:if="${newsItem.imageUrl != null}"
+           th:src="${newsItem.imageUrl}"
+      >
+      <div>
+        <span th:text="${newsItem.publishedAt}"></span>
+        <span th:if="${newsItem.author != null}" th:text="${' / ' + newsItem.author}"></span>
+      </div>
     </div>
-  </div>
-
+    </div>
 </div>
 </body>
 </html>
@@ -50,43 +50,43 @@ news:
   sources:
     - id: MK_HEADLINE
       display-order: 1
-      section: "News"
+      section: "NEWS"
 
     - id: JTBC_ISSUE_TOP_10
       display-order: 2
-      section: "News"
+      section: NEWS
 
     - id: HANI_POPULAR
       display-order: 3
-      section: "News"
+      section: NEWS
 
     - id: MK_GLOBAL
       display-order: 4
-      section: "News"
+      section: NEWS
 
     - id: NYT_WORLD
       display-order: 5
-      section: "News"
+      section: NEWS
 
     - id: MK_ECONOMY
       display-order: 6
-      section: "Economy"
+      section: ECONOMY
 
     - id: MK_MONEY_AND_RICHES
       display-order: 7
-      section: "Economy"
+      section: ECONOMY
 
     - id: JTBC_ECONOMY
       display-order: 8
-      section: "Economy"
+      section: ECONOMY
 
     - id: HANKYUNG_ECONOMY
       display-order: 9
-      section: "Economy"
+      section: ECONOMY
 
     - id: MK_REAL_ESTATE
       display-order: 10
-      section: "Economy"
+      section: ECONOMY
 
 ./main/java/com/biehn/personal/news_reader/NewsReaderApplication.java
 package com.biehn.personal.news_reader;
@@ -127,7 +127,7 @@ public class NewsProperties {
   public static class SourceConfig {
     SourceId id;
     int displayOrder;
-    String section;
+    Section section;
 
     public SourceId getId() {
       return id;
@@ -145,16 +145,24 @@ public class NewsProperties {
       this.displayOrder = displayOrder;
     }
 
-    public String getSection() {
+    public Section getSection() {
       return section;
     }
 
-    public void setSection(String section) {
+    public void setSection(Section section) {
       this.section = section;
     }
   }
 
 
+
+}
+./main/java/com/biehn/personal/news_reader/config/Section.java
+package com.biehn.personal.news_reader.config;
+
+public enum Section {
+  ECONOMY,
+  NEWS
 
 }
 ./main/java/com/biehn/personal/news_reader/config/AppConfig.java
@@ -1013,8 +1021,55 @@ public class NewsController {
 
   @GetMapping("/news")
   public String news(Model model) throws Exception{
-    model.addAttribute("newsMap",newsService.getNews());
+    model.addAttribute("sectionViewModels",newsService.getNews());
     return "news";
+  }
+}
+./main/java/com/biehn/personal/news_reader/model/NewsSourceViewModel.java
+package com.biehn.personal.news_reader.model;
+
+import java.util.List;
+
+public class NewsSourceViewModel {
+
+  private final String sourceName;
+  private final List<NewsItem> newsItems;
+
+  public NewsSourceViewModel(String sourceName, List<NewsItem> newsItems) {
+    this.sourceName = sourceName;
+    this.newsItems = newsItems;
+  }
+
+  public List<NewsItem> getNewsItems() {
+    return newsItems;
+  }
+
+  public String getSourceName() {
+    return sourceName;
+  }
+}
+./main/java/com/biehn/personal/news_reader/model/SectionViewModel.java
+package com.biehn.personal.news_reader.model;
+
+import com.biehn.personal.news_reader.config.Section;
+import java.util.List;
+
+public class SectionViewModel {
+
+  private final Section section;
+  private final List<NewsSourceViewModel> newsSourceViewModels;
+
+  public SectionViewModel(Section section, List<NewsSourceViewModel> newsSourceViewModels) {
+    this.section = section;
+    this.newsSourceViewModels = newsSourceViewModels;
+  }
+
+  public Section getSection() {
+    return section;
+  }
+
+  public List<NewsSourceViewModel> getNewsSourceViewModels() {
+    return newsSourceViewModels;
   }
 }
 ./main/java/com/biehn/personal/news_reader/model/NewsItem.java
@@ -1084,7 +1139,10 @@ package com.biehn.personal.news_reader.service;
 
 import com.biehn.personal.news_reader.config.NewsProperties;
 import com.biehn.personal.news_reader.config.NewsProperties.SourceConfig;
+import com.biehn.personal.news_reader.config.Section;
 import com.biehn.personal.news_reader.model.NewsItem;
+import com.biehn.personal.news_reader.model.NewsSourceViewModel;
+import com.biehn.personal.news_reader.model.SectionViewModel;
 import com.biehn.personal.news_reader.source.NewsSource;
 import com.biehn.personal.news_reader.source.SourceId;
 import java.io.IOException;
@@ -1123,7 +1181,7 @@ public class NewsService {
 
   }
 
-  Map<SourceId, SourceConfig> buildConfigLookup (){
+  Map<SourceId, SourceConfig> buildConfigLookup() {
     Map<SourceId, SourceConfig> configMap = new HashMap<>();
     for (SourceConfig source : newsProperties.getSources()) {
       configMap.put(source.getId(), source);
@@ -1131,7 +1189,7 @@ public class NewsService {
     return configMap;
   }
 
-  List<NewsSource> sortNewsSources () {
+  List<NewsSource> sortNewsSources() {
     Map<SourceId, SourceConfig> configMap = buildConfigLookup();
 
     Comparator<NewsSource> newsSourceComparator = Comparator.comparingInt((NewsSource source) -> {
@@ -1177,21 +1235,41 @@ public class NewsService {
     return doc;
   }
 
-  public Map<String, List<NewsItem>> getNews() throws Exception {
-    Map<String, List<NewsItem>> newsMap = new LinkedHashMap<>();
+  public List<SectionViewModel> getNews() throws Exception {
+    Map<SourceId, SourceConfig> configMap = buildConfigLookup();
+    Map<Section, List<NewsSourceViewModel>> sectionListMap = new HashMap<>();
+    List<SectionViewModel> sectionViewModels = new ArrayList<>();
 
     for (NewsSource newsSource : sortNewsSources()) {
+
       try {
         String xml = fetchRss(newsSource.getRssUrl());
         Document document = parseXml(xml);
-        newsMap.put(newsSource.getSourceName(), newsSource.extract(document));
+        List<NewsItem> newsItems = newsSource.extract(document);
+
+        SourceConfig sourceConfig = configMap.get(newsSource.getSourceId());
+        Section section = sourceConfig.getSection();
+
+        NewsSourceViewModel newsSourceViewModel = new NewsSourceViewModel(
+            newsSource.getSourceName(), newsItems);
+
+        sectionListMap.computeIfAbsent(section, sectionAsKey -> new ArrayList<>()).add(newsSourceViewModel);
+
       } catch (Exception e) {
         System.out.println("Failed to fetch source: " + newsSource.getRssUrl());
         e.printStackTrace();
         continue;
       }
     }
-    return newsMap;
+
+    for (Map.Entry<Section, List<NewsSourceViewModel>> entry : sectionListMap.entrySet()) {
+      SectionViewModel sectionViewModel =
+          new SectionViewModel(entry.getKey(), entry.getValue());
+
+      sectionViewModels.add(sectionViewModel);
+    }
+
+    return sectionViewModels;
   }
 }
 

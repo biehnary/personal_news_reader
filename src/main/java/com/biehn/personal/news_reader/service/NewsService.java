@@ -1,6 +1,7 @@
 package com.biehn.personal.news_reader.service;
 
 import com.biehn.personal.news_reader.config.NewsProperties;
+import com.biehn.personal.news_reader.config.NewsProperties.SectionConfig;
 import com.biehn.personal.news_reader.config.NewsProperties.SourceConfig;
 import com.biehn.personal.news_reader.config.Section;
 import com.biehn.personal.news_reader.model.NewsItem;
@@ -15,7 +16,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import javax.xml.parsers.DocumentBuilder;
@@ -50,6 +50,14 @@ public class NewsService {
       configMap.put(source.getId(), source);
     }
     return configMap;
+  }
+
+  Map<Section, SectionConfig> buildSectionConfigLookup() {
+    Map<Section, SectionConfig> sectionConfigMap = new HashMap<>();
+    for (SectionConfig section : newsProperties.getSections()) {
+      sectionConfigMap.put(section.getSection(), section);
+    }
+    return sectionConfigMap;
   }
 
   List<NewsSource> sortNewsSources() {
@@ -116,7 +124,8 @@ public class NewsService {
         NewsSourceViewModel newsSourceViewModel = new NewsSourceViewModel(
             newsSource.getSourceName(), newsItems);
 
-        sectionListMap.computeIfAbsent(section, sectionAsKey -> new ArrayList<>()).add(newsSourceViewModel);
+        sectionListMap.computeIfAbsent(section, sectionAsKey -> new ArrayList<>())
+            .add(newsSourceViewModel);
 
       } catch (Exception e) {
         System.out.println("Failed to fetch source: " + newsSource.getRssUrl());
@@ -131,6 +140,15 @@ public class NewsService {
 
       sectionViewModels.add(sectionViewModel);
     }
+
+    Map<Section, SectionConfig> sectionConfigMap = buildSectionConfigLookup();
+    Comparator<SectionViewModel> sectionViewModelComparator = Comparator.comparingInt(
+        (SectionViewModel sectionView) -> {
+          SectionConfig sectionConfig = sectionConfigMap.get(sectionView.getSection());
+          return sectionConfig.getDisplayOrder();
+        });
+
+    sectionViewModels.sort(sectionViewModelComparator);
 
     return sectionViewModels;
   }

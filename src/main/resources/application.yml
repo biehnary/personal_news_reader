@@ -40,3 +40,10 @@ news:
       display-order: 10
       section: ECONOMY
 
+  sections:
+    - section: ECONOMY
+      display-order: 2
+
+    - section: NEWS
+      display-order: 1
+

@@ -9,14 +9,23 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class NewsProperties {
 
   List<SourceConfig> sources = new ArrayList<>();
+  List<SectionConfig> sections = new ArrayList<>();
+
+  public void setSources(
+      List<SourceConfig> sources) {
+    this.sources = sources;
+  }
+
+  public void setSections(List<SectionConfig> sections) {
+    this.sections = sections;
+  }
 
   public List<SourceConfig> getSources() {
     return sources;
   }
 
-  public void setSources(
-      List<SourceConfig> sources) {
-    this.sources = sources;
+  public List<SectionConfig> getSections() {
+    return sections;
   }
 
   public static class SourceConfig {
@@ -49,6 +58,25 @@ public class NewsProperties {
     }
   }
 
+  public static class SectionConfig {
+    Section section;
+    int displayOrder;
 
+    public Section getSection() {
+      return section;
+    }
+
+    public void setSection(Section section) {
+      this.section = section;
+    }
+
+    public int getDisplayOrder() {
+      return displayOrder;
+    }
+
+    public void setDisplayOrder(int displayOrder) {
+      this.displayOrder = displayOrder;
+    }
+  }
 
 }
