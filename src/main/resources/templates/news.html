@@ -4,13 +4,19 @@
   <meta charset="UTF-8">
   <meta content="width=device-width, initial-scale=1" name="viewport">
   <title>Document</title>
+  <link rel="stylesheet" href="/css/news.css">
+
 </head>
 <body>
 <div th:each="sectionViewModel : ${sectionViewModels}">
   <div th:text="${sectionViewModel.section}">Section</div>
-  <div th:each="newsSourceViewModel : ${sectionViewModel.newsSourceViewModels}">
+  <div
+      class="source-container"
+      th:each="newsSourceViewModel : ${sectionViewModel.newsSourceViewModels}">
     <div th:text="${newsSourceViewModel.sourceName}">SourceName</div>
-    <div th:each="newsItem:${newsSourceViewModel.newsItems}">
+    <div
+        class="news-item"
+        th:each="newsItem:${newsSourceViewModel.newsItems}">
       <div>
         <a th:href="${newsItem.link}" th:text="${newsItem.title}"></a>
       </div>
@@ -28,5 +34,7 @@
     </div>
     </div>
 </div>
+
+<script src="/js/news.js"></script>
 </body>
 </html>
