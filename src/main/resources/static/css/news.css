@@ -1,7 +1,7 @@
-.hidden {
+.news-list > .news-item:nth-child(n + 3) {
   display: none;
 }
 
-body {
-  background: aqua;
+.source-container.expanded > .news-list > .news-item:nth-child(n + 3){
+  display: block;
 }

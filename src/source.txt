@@ -19,13 +19,19 @@ class NewsReaderApplicationTests {
   <meta charset="UTF-8">
   <meta content="width=device-width, initial-scale=1" name="viewport">
   <title>Document</title>
+  <link rel="stylesheet" href="/css/news.css">
+
 </head>
 <body>
 <div th:each="sectionViewModel : ${sectionViewModels}">
   <div th:text="${sectionViewModel.section}">Section</div>
-  <div th:each="newsSourceViewModel : ${sectionViewModel.newsSourceViewModels}">
+  <div
+      class="source-container"
+      th:each="newsSourceViewModel : ${sectionViewModel.newsSourceViewModels}">
     <div th:text="${newsSourceViewModel.sourceName}">SourceName</div>
-    <div th:each="newsItem:${newsSourceViewModel.newsItems}">
+    <div
+        class="news-item"
+        th:each="newsItem:${newsSourceViewModel.newsItems}">
       <div>
         <a th:href="${newsItem.link}" th:text="${newsItem.title}"></a>
       </div>
@@ -43,6 +49,8 @@ class NewsReaderApplicationTests {
     </div>
     </div>
 </div>
+
+<script src="/js/news.js"></script>
 </body>
 </html>
 ./main/resources/application.yml
@@ -88,6 +96,13 @@ news:
       display-order: 10
       section: ECONOMY
 
+  sections:
+    - section: ECONOMY
+      display-order: 2
+
+    - section: NEWS
+      display-order: 1
+
 ./main/java/com/biehn/personal/news_reader/NewsReaderApplication.java
 package com.biehn.personal.news_reader;
 
@@ -114,14 +129,23 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class NewsProperties {
 
   List<SourceConfig> sources = new ArrayList<>();
+  List<SectionConfig> sections = new ArrayList<>();
+
+  public void setSources(
+      List<SourceConfig> sources) {
+    this.sources = sources;
+  }
+
+  public void setSections(List<SectionConfig> sections) {
+    this.sections = sections;
+  }
 
   public List<SourceConfig> getSources() {
     return sources;
   }
 
-  public void setSources(
-      List<SourceConfig> sources) {
-    this.sources = sources;
+  public List<SectionConfig> getSections() {
+    return sections;
   }
 
   public static class SourceConfig {
@@ -154,7 +178,26 @@ public class NewsProperties {
     }
   }
 
+  public static class SectionConfig {
+    Section section;
+    int displayOrder;
 
+    public Section getSection() {
+      return section;
+    }
+
+    public void setSection(Section section) {
+      this.section = section;
+    }
+
+    public int getDisplayOrder() {
+      return displayOrder;
+    }
+
+    public void setDisplayOrder(int displayOrder) {
+      this.displayOrder = displayOrder;
+    }
+  }
 
 }
 ./main/java/com/biehn/personal/news_reader/config/Section.java
@@ -1138,6 +1181,7 @@ public class NewsItem {
 package com.biehn.personal.news_reader.service;
 
 import com.biehn.personal.news_reader.config.NewsProperties;
+import com.biehn.personal.news_reader.config.NewsProperties.SectionConfig;
 import com.biehn.personal.news_reader.config.NewsProperties.SourceConfig;
 import com.biehn.personal.news_reader.config.Section;
 import com.biehn.personal.news_reader.model.NewsItem;
@@ -1152,7 +1196,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import javax.xml.parsers.DocumentBuilder;
@@ -1187,6 +1230,14 @@ public class NewsService {
       configMap.put(source.getId(), source);
     }
     return configMap;
+  }
+
+  Map<Section, SectionConfig> buildSectionConfigLookup() {
+    Map<Section, SectionConfig> sectionConfigMap = new HashMap<>();
+    for (SectionConfig section : newsProperties.getSections()) {
+      sectionConfigMap.put(section.getSection(), section);
+    }
+    return sectionConfigMap;
   }
 
   List<NewsSource> sortNewsSources() {
@@ -1253,7 +1304,8 @@ public class NewsService {
         NewsSourceViewModel newsSourceViewModel = new NewsSourceViewModel(
             newsSource.getSourceName(), newsItems);
 
-        sectionListMap.computeIfAbsent(section, sectionAsKey -> new ArrayList<>()).add(newsSourceViewModel);
+        sectionListMap.computeIfAbsent(section, sectionAsKey -> new ArrayList<>())
+            .add(newsSourceViewModel);
 
       } catch (Exception e) {
         System.out.println("Failed to fetch source: " + newsSource.getRssUrl());
@@ -1268,6 +1320,15 @@ public class NewsService {
 
       sectionViewModels.add(sectionViewModel);
     }
+
+    Map<Section, SectionConfig> sectionConfigMap = buildSectionConfigLookup();
+    Comparator<SectionViewModel> sectionViewModelComparator = Comparator.comparingInt(
+        (SectionViewModel sectionView) -> {
+          SectionConfig sectionConfig = sectionConfigMap.get(sectionView.getSection());
+          return sectionConfig.getDisplayOrder();
+        });
+
+    sectionViewModels.sort(sectionViewModelComparator);
 
     return sectionViewModels;
   }
