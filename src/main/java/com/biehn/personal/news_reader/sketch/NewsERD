@@ -1,0 +1,31 @@
+Article(
+  pk,
+  title,
+  description,
+  link,
+  imageUrl,
+  publishedAt,
+  author,
+  source_fk
+)
+
+Source(
+  pk,
+  sourceName,
+  section_fk
+)
+
+Section(
+  pk,
+  sectionName
+)
+
+Snapshot(
+  pk,
+  collectedDate
+)
+
+ArticleSnapshot(
+  article_fk,
+  snapshot_fk
+)
