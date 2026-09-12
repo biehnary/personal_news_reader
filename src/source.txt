@@ -19,38 +19,45 @@ class NewsReaderApplicationTests {
   <meta charset="UTF-8">
   <meta content="width=device-width, initial-scale=1" name="viewport">
   <title>Document</title>
-  <link rel="stylesheet" href="/css/news.css">
+  <link href="/css/news.css" rel="stylesheet">
 
 </head>
 <body>
-<div th:each="sectionViewModel : ${sectionViewModels}">
-  <div th:text="${sectionViewModel.section}">Section</div>
-  <div
-      class="source-container"
-      th:each="newsSourceViewModel : ${sectionViewModel.newsSourceViewModels}">
-    <div th:text="${newsSourceViewModel.sourceName}">SourceName</div>
+
+<main class="page-container">
+  <div th:each="sectionViewModel : ${sectionViewModels}">
+    <div class="section-title" th:text="${sectionViewModel.section}">Section</div>
     <div
-        class="news-item"
-        th:each="newsItem:${newsSourceViewModel.newsItems}">
-      <div>
-        <a th:href="${newsItem.link}" th:text="${newsItem.title}"></a>
-      </div>
-      <img style="width: 200px;
-         height: 120px;
+        class="source-container"
+        th:each="newsSourceViewModel : ${sectionViewModel.newsSourceViewModels}">
+      <div class="source-title" th:text="${newsSourceViewModel.sourceName}">SourceName</div>
+      <div class="news-list">
+        <div
+            class="news-item"
+            th:each="newsItem:${newsSourceViewModel.newsItems}">
+          <div>
+            <a th:href="${newsItem.link}" th:text="${newsItem.title}"></a>
+          </div>
+          <img style="width: 300px;
+         height: 180px;
          object-fit: cover;"
-           th:alt="${newsItem.title}"
-           th:if="${newsItem.imageUrl != null}"
-           th:src="${newsItem.imageUrl}"
-      >
-      <div>
-        <span th:text="${newsItem.publishedAt}"></span>
-        <span th:if="${newsItem.author != null}" th:text="${' / ' + newsItem.author}"></span>
+               th:alt="${newsItem.title}"
+               th:if="${newsItem.imageUrl != null}"
+               th:src="${newsItem.imageUrl}"
+          >
+          <div>
+            <span th:text="${newsItem.publishedAt}"></span>
+            <span class="article-metadata" th:if="${newsItem.author != null}" th:text="${' / ' + newsItem.author}"></span>
+          </div>
+        </div>
       </div>
+      <button class="news-toggle">Show More</button>
     </div>
-    </div>
-</div>
+  </div>
+</main>
 
 <script src="/js/news.js"></script>
+
 </body>
 </html>
 ./main/resources/application.yml
@@ -115,6 +122,34 @@ public class NewsReaderApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(NewsReaderApplication.class, args);
 	}
+
+}
+./main/java/com/biehn/personal/news_reader/repository/ArticleRepository.java
+package com.biehn.personal.news_reader.repository;
+
+import com.biehn.personal.news_reader.entity.ArticleEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface ArticleRepository extends JpaRepository<ArticleEntity, Long> {
+
+}
+./main/java/com/biehn/personal/news_reader/repository/ArticleSnapshotRepository.java
+package com.biehn.personal.news_reader.repository;
+
+import com.biehn.personal.news_reader.entity.ArticleSnapshotEntity;
+import com.biehn.personal.news_reader.entity.ArticleSnapshotId;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface ArticleSnapshotRepository extends JpaRepository<ArticleSnapshotEntity, ArticleSnapshotId> {
+
+}
+./main/java/com/biehn/personal/news_reader/repository/SnapshotRepository.java
+package com.biehn.personal.news_reader.repository;
+
+import com.biehn.personal.news_reader.entity.SnapshotEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface SnapshotRepository extends JpaRepository<SnapshotEntity, Long> {
 
 }
 ./main/java/com/biehn/personal/news_reader/config/NewsProperties.java
@@ -223,6 +258,124 @@ public class AppConfig {
   public RestClient restClient() {
     return RestClient.create();
   }
+}
+./main/java/com/biehn/personal/news_reader/entity/ArticleEntity.java
+package com.biehn.personal.news_reader.entity;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+
+@Entity
+public class ArticleEntity {
+
+  @Id @GeneratedValue
+  private Long id;
+  private String title;
+  private String description;
+  private String link;
+  private String imageUrl;
+  private String publishedAt;
+  private String author;
+
+  @ManyToOne
+  private SourceEntity source_fk;
+}
+./main/java/com/biehn/personal/news_reader/entity/ArticleSnapshotId.java
+package com.biehn.personal.news_reader.entity;
+
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.MapsId;
+
+@Embeddable
+public class ArticleSnapshotId {
+
+  private Long articleId;
+  private Long snapshotId;
+
+}
+./main/java/com/biehn/personal/news_reader/entity/SnapshotEntity.java
+package com.biehn.personal.news_reader.entity;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import java.time.LocalDate;
+
+@Entity
+public class SnapshotEntity {
+
+  @Id
+  @GeneratedValue
+  private Long id;
+  private LocalDate collectedDate;
+
+}
+./main/java/com/biehn/personal/news_reader/entity/ArticleSnapshotEntity.java
+package com.biehn.personal.news_reader.entity;
+
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.MapsId;
+
+@Entity
+public class ArticleSnapshotEntity {
+
+  @EmbeddedId
+  private ArticleSnapshotId articleSnapshotId;
+
+  @ManyToOne
+  @MapsId("articleId")
+  private ArticleEntity article;
+  @ManyToOne
+  @MapsId("snapshotId")
+  private SnapshotEntity snapshot;
+
+}
+./main/java/com/biehn/personal/news_reader/entity/SectionEntity.java
+package com.biehn.personal.news_reader.entity;
+
+import com.biehn.personal.news_reader.config.Section;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+
+@Entity
+public class SectionEntity {
+  @Id
+  @GeneratedValue
+  private Long id;
+
+  @Enumerated(EnumType.STRING)
+  private Section section;
+}
+./main/java/com/biehn/personal/news_reader/entity/SourceEntity.java
+package com.biehn.personal.news_reader.entity;
+
+import com.biehn.personal.news_reader.source.SourceId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+
+@Entity
+public class SourceEntity {
+
+  @Id
+  @GeneratedValue
+  private Long id;
+  private String sourceName;
+  @Enumerated(EnumType.STRING)
+  private SourceId sourceId;
+
+  @ManyToOne
+  private SectionEntity section;
 }
 ./main/java/com/biehn/personal/news_reader/source/MkMoneyAndRichesSource.java
 package com.biehn.personal.news_reader.source;
@@ -1335,3 +1488,103 @@ public class NewsService {
 }
 
 
+./main/java/com/biehn/personal/news_reader/sketch/Ordering.md
+application.yml
+news
+sources
+→ id: SourceId
+→ display-order: int
+→ section: Section
+
+    sections
+      → section: Section
+      → display-order: int
+
+NewsProperties
+→ sources: List<SourceConfig>
+→ sections: List<SectionConfig>
+
+SourceConfig
+→ id: SourceId
+→ displayOrder: int
+→ section: Section
+
+SectionConfig
+→ section: Section
+→ displayOrder: int
+
+
+Section
+→ NEWS
+→ ECONOMY
+
+
+SectionViewModel
+→ section: Section
+→ newsSourceViewModels: List<NewsSourceViewModel>
+
+NewsSourceViewModel
+→ sourceName: String
+→ newsItems: List<NewsItem>
+
+
+Section Ordering
+SectionViewModel.section
+→ Section
+→ SectionConfig
+→ displayOrder./main/java/com/biehn/personal/news_reader/sketch/Entity_Relation.md
+Article
+- 실제 기사 데이터
+
+Source
+- sourceId
+- sourceName
+- section
+
+Section
+- section enum
+
+Snapshot
+- collectedDate
+
+ArticleSnapshot
+- articleId + snapshotId./main/java/com/biehn/personal/news_reader/sketch/NewsERD.md
+Article(
+  pk,
+  title,
+  description,
+  link,
+  imageUrl,
+  publishedAt,
+  author,
+  source_fk
+)
+
+Source(
+  pk,
+  sourceName,
+  section_fk
+)
+
+Section(
+  pk,
+  sectionName
+)
+
+Snapshot(
+  pk,
+  collectedDate
+)
+
+ArticleSnapshot(
+  article_fk,
+  snapshot_fk
+)
+
+1. RSS fetch
+2. Article 중복 확인
+3. 새 Article 저장 또는 기존 Article 재사용
+4. 오늘 Snapshot 조회/생성
+5. Article ↔ Snapshot 관계 갱신
+6. 7일치 Snapshot 조회
+7. 화면 출력

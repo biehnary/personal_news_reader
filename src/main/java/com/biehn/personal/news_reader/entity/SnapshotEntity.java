@@ -8,6 +8,13 @@ import java.time.LocalDate;
 @Entity
 public class SnapshotEntity {
 
+  protected SnapshotEntity() {
+  }
+
+  public SnapshotEntity(LocalDate collectedDate) {
+    this.collectedDate = collectedDate;
+  }
+
   @Id
   @GeneratedValue
   private Long id;

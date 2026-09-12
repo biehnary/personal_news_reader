@@ -8,6 +8,14 @@ import jakarta.persistence.MapsId;
 @Entity
 public class ArticleSnapshotEntity {
 
+  protected ArticleSnapshotEntity() {
+  }
+
+  public ArticleSnapshotEntity(ArticleEntity article, SnapshotEntity snapshot) {
+    this.article = article;
+    this.snapshot = snapshot;
+  }
+
   @EmbeddedId
   private ArticleSnapshotId articleSnapshotId;
 
@@ -18,4 +26,7 @@ public class ArticleSnapshotEntity {
   @MapsId("snapshotId")
   private SnapshotEntity snapshot;
 
+  public ArticleEntity getArticleEntity() {
+    return article;
+  }
 }

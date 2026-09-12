@@ -1,6 +1,9 @@
 package com.biehn.personal.news_reader.entity;
 
+import com.biehn.personal.news_reader.config.Section;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 
@@ -9,5 +12,14 @@ public class SectionEntity {
   @Id
   @GeneratedValue
   private Long id;
-  private String sectionName;
+
+  @Enumerated(EnumType.STRING)
+  private Section section;
+
+  public SectionEntity(Section section) {
+    this.section = section;
+  }
+
+  public SectionEntity() {
+  }
 }
