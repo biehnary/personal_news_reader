@@ -20,4 +20,7 @@ public class SnapshotEntity {
   private Long id;
   private LocalDate collectedDate;
 
+  public LocalDate getCollectedDate() {
+    return collectedDate;
+  }
 }

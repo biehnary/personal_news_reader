@@ -1,5 +1,6 @@
 package com.biehn.personal.news_reader.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -25,6 +26,7 @@ public class ArticleEntity {
   @Id @GeneratedValue
   private Long id;
   private String title;
+  @Column(columnDefinition = "TEXT")
   private String description;
   private String link;
   private String imageUrl;
@@ -41,4 +43,25 @@ public class ArticleEntity {
   public String getLink() {
     return link;
   }
+
+  public String getTitle() {
+    return title;
+  }
+
+  public String getDescription() {
+    return description;
+  }
+
+  public String getImageUrl() {
+    return imageUrl;
+  }
+
+  public String getPublishedAt() {
+    return publishedAt;
+  }
+
+  public String getAuthor() {
+    return author;
+  }
+
 }

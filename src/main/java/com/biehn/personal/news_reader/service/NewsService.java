@@ -29,7 +29,9 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -101,7 +103,6 @@ public class NewsService {
 
   /*
   Refresh Sources and DB sync
-  작성 후 getNews() 수정하기
    */
   public void syncNews() {
     //SnapshotEntity 생성
@@ -215,6 +216,33 @@ public class NewsService {
         continue;
       }
     }
+
+    //retention logic
+    LocalDate cutoff = today.minusDays(7);
+    List<SnapshotEntity> snapshotEntities = snapshotRepository.findAll();
+
+    for (SnapshotEntity entity : snapshotEntities) {
+      if (entity.getCollectedDate().isBefore(cutoff)) {
+
+        List<ArticleSnapshotEntity> articleSnapshotEntities = articleSnapshotRepository.findBySnapshot(
+            entity);
+
+        for (ArticleSnapshotEntity articleSnapshotEntity : articleSnapshotEntities) {
+          ArticleEntity articleEntity = articleSnapshotEntity.getArticleEntity();
+          articleSnapshotRepository.delete(articleSnapshotEntity);
+
+          boolean exists = articleSnapshotRepository.existsByArticle(articleEntity);
+
+          if (exists) {
+            continue;
+          }
+          articleRepository.delete(articleEntity);
+        }
+
+        snapshotRepository.delete(entity);
+      }
+    }
+
   }
 
 
@@ -245,6 +273,75 @@ public class NewsService {
     InputSource inputSource = new InputSource(new StringReader(xml));
     Document doc = builder.parse(inputSource);
     return doc;
+  }
+
+  // getNews(), read DB
+  public List<SectionViewModel> getNews() {
+    LocalDate today = LocalDate.now();
+    Optional<SnapshotEntity> optionalSnapshotEntity = snapshotRepository.findByCollectedDate(today);
+    SnapshotEntity snapshotEntity = optionalSnapshotEntity.get();
+    List<ArticleSnapshotEntity> articleSnapshotEntities = articleSnapshotRepository.findBySnapshot(
+        snapshotEntity);
+
+    Map<SourceId, List<NewsItem>> collectedItemsBySourceId = new HashMap<>();
+    record SourceInfo(String sourceName, Section section) {
+
+    }
+    Map<SourceId, SourceInfo> sourceInfoLookup = new HashMap<>();
+
+    for (ArticleSnapshotEntity articleSnapshotEntity : articleSnapshotEntities) {
+      ArticleEntity articleEntity = articleSnapshotEntity.getArticleEntity();
+
+      // sourceId ->  sourceName, Section
+      SourceEntity sourceEntity = articleEntity.getSourceEntity();
+      SectionEntity sectionEntity = sourceEntity.getSectionEntity();
+      String sourceName = sourceEntity.getSourceName();
+      SourceId sourceId = sourceEntity.getSourceId();
+      Section section = sectionEntity.getSection();
+      sourceInfoLookup.putIfAbsent(sourceId, new SourceInfo(sourceName, section));
+
+      NewsItem newsItem = new NewsItem(articleEntity.getTitle(), articleEntity.getDescription(),
+          articleEntity.getLink(), articleEntity.getImageUrl(), articleEntity.getPublishedAt(),
+          articleEntity.getAuthor(), articleEntity.getSourceEntity().getSourceName());
+
+      // collecting
+      if (collectedItemsBySourceId.containsKey(sourceId)) {
+        collectedItemsBySourceId.get(sourceId).add(newsItem);
+      } else {
+        collectedItemsBySourceId.put(sourceId, new ArrayList<>());
+        collectedItemsBySourceId.get(sourceId).add(newsItem);
+      }
+    }
+
+    // NewsSourceViewModel, SectionViewModel
+    Set<Entry<SourceId, List<NewsItem>>> entries = collectedItemsBySourceId.entrySet();
+    Map<Section, List<NewsSourceViewModel>> collectedNewsSourceViewModelsBySection = new HashMap<>();
+    for (Entry<SourceId, List<NewsItem>> entry : entries) {
+
+      // NewsSourceViewModel
+      String sourceName = sourceInfoLookup.get(entry.getKey()).sourceName();
+      NewsSourceViewModel newsSourceViewModel = new NewsSourceViewModel(sourceName,
+          entry.getValue());
+
+      // For SectionViewModel
+      Section section = sourceInfoLookup.get(entry.getKey()).section();
+      if (collectedNewsSourceViewModelsBySection.containsKey(section)) {
+        collectedNewsSourceViewModelsBySection.get(section).add(newsSourceViewModel);
+      } else {
+        collectedNewsSourceViewModelsBySection.put(section, new ArrayList<>());
+        collectedNewsSourceViewModelsBySection.get(section).add(newsSourceViewModel);
+      }
+    }
+
+    List<SectionViewModel> sectionViewModels = new ArrayList<>();
+    for (Entry<Section, List<NewsSourceViewModel>> sectionListEntry : collectedNewsSourceViewModelsBySection.entrySet()) {
+      SectionViewModel sectionViewModel = new SectionViewModel(sectionListEntry.getKey(),
+          sectionListEntry.getValue());
+      sectionViewModels.add(sectionViewModel);
+    }
+
+
+    return sectionViewModels;
   }
 
 

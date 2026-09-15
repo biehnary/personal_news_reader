@@ -15,6 +15,7 @@ public class NewsController {
 
   @GetMapping("/news")
   public String news(Model model) throws Exception{
+    newsService.syncNews();
     model.addAttribute("sectionViewModels",newsService.getNews());
     return "news";
   }

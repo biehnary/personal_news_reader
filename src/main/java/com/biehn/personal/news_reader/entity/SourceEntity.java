@@ -24,6 +24,14 @@ public class SourceEntity {
     return sourceId;
   }
 
+  public String getSourceName() {
+    return sourceName;
+  }
+
+  public SectionEntity getSectionEntity() {
+    return section;
+  }
+
   @Id
   @GeneratedValue
   private Long id;

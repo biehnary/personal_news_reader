@@ -22,4 +22,8 @@ public class SectionEntity {
 
   public SectionEntity() {
   }
+
+  public Section getSection() {
+    return section;
+  }
 }

@@ -67,6 +67,7 @@ public class HaniPopularSource implements NewsSource {
           "Hani 한겨레");
 
       newsItems.add(newsItem);
+
     }
 
     return newsItems;

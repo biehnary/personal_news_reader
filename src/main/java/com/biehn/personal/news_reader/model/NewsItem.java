@@ -1,5 +1,7 @@
 package com.biehn.personal.news_reader.model;
 
+import jakarta.persistence.Lob;
+
 public class NewsItem {
   private String title;
   private String description;
