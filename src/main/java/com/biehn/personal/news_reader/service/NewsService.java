@@ -25,6 +25,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -315,11 +316,23 @@ public class NewsService {
 
     // NewsSourceViewModel, SectionViewModel
     Set<Entry<SourceId, List<NewsItem>>> entries = collectedItemsBySourceId.entrySet();
+
+    List<Entry<SourceId, List<NewsItem>>> entryList = new ArrayList<>(entries);
+    Map<SourceId, SourceConfig> configMap = buildConfigLookup();
+    Comparator<Entry<SourceId, List<NewsItem>>> entryListComparator = Comparator.comparingInt((entry) -> {
+      SourceConfig sourceConfig = configMap.get(entry.getKey());
+      return sourceConfig.getDisplayOrder();
+    });
+    entryList.sort(entryListComparator);
+
+
+
     Map<Section, List<NewsSourceViewModel>> collectedNewsSourceViewModelsBySection = new HashMap<>();
-    for (Entry<SourceId, List<NewsItem>> entry : entries) {
+    for (Entry<SourceId, List<NewsItem>> entry : entryList) {
 
       // NewsSourceViewModel
       String sourceName = sourceInfoLookup.get(entry.getKey()).sourceName();
+
       NewsSourceViewModel newsSourceViewModel = new NewsSourceViewModel(sourceName,
           entry.getValue());
 
@@ -337,10 +350,18 @@ public class NewsService {
     for (Entry<Section, List<NewsSourceViewModel>> sectionListEntry : collectedNewsSourceViewModelsBySection.entrySet()) {
       SectionViewModel sectionViewModel = new SectionViewModel(sectionListEntry.getKey(),
           sectionListEntry.getValue());
+
       sectionViewModels.add(sectionViewModel);
     }
 
+    // sort Section
+    Map<Section, SectionConfig> sectionConfigMap = buildSectionConfigLookup();
+    Comparator<SectionViewModel> sectionViewModelComparator = Comparator.comparingInt((sectionViewModel) -> {
+      SectionConfig sectionConfig = sectionConfigMap.get(sectionViewModel.getSection());
+      return sectionConfig.getDisplayOrder();
+    });
 
+    sectionViewModels.sort(sectionViewModelComparator);
     return sectionViewModels;
   }
 
