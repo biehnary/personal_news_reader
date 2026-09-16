@@ -13,24 +13,60 @@ class NewsReaderApplicationTests {
 
 }
 ./main/resources/static/css/news.css
-
 /*page style*/
 .page-container {
   width: 100%;
-  max-width: 800px;
+  max-width: 1000px;
   margin: auto;
+
+  display: flex;
+}
+
+/*remote*/
+.remote {
+  position: sticky;
+  top: 100px;
+  align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  padding: 15px;
+  border: 1px solid lightgrey;
+  border-radius: 5px;
+}
+
+.date-button {
+  border: none;
+  font-weight: lighter;
+  font-size: 13px;
+  background: none;
+  color: lightgrey;
+}
+
+.date-button.selected {
+  border: none;
+  font-weight: lighter;
+  font-size: 13px;
+  background: none;
+  color: black;
+}
+
+/*article-column*/
+.article-column {
+  margin-left: 50px;
 }
 
 .section-title {
   text-align: center;
-  font-size:50px ;
+  font-size: 50px;
   font-weight: bold;
 
   border-bottom: 4px double black;
 }
 
 .source-title {
-  font-size:32px ;
+  font-size: 32px;
   font-weight: normal;
   margin: 15px;
 }
@@ -91,7 +127,7 @@ a {
   display: none;
 }
 
-.source-container.expanded > .news-list > .news-item:nth-child(n + 3){
+.source-container.expanded > .news-list > .news-item:nth-child(n + 3) {
   display: block;
 }
 
@@ -125,33 +161,47 @@ showButtons.forEach((showButton) => {
 <body>
 
 <main class="page-container">
-  <div th:each="sectionViewModel : ${sectionViewModels}">
-    <div class="section-title" th:text="${sectionViewModel.section}">Section</div>
-    <div
-        class="source-container"
-        th:each="newsSourceViewModel : ${sectionViewModel.newsSourceViewModels}">
-      <div class="source-title" th:text="${newsSourceViewModel.sourceName}">SourceName</div>
-      <div class="news-list">
-        <div
-            class="news-item"
-            th:each="newsItem:${newsSourceViewModel.newsItems}">
-          <div>
-            <a th:href="${newsItem.link}" th:text="${newsItem.title}"></a>
-          </div>
-          <img style="width: 300px;
-         height: 180px;
-         object-fit: cover;"
-               th:alt="${newsItem.title}"
-               th:if="${newsItem.imageUrl != null}"
-               th:src="${newsItem.imageUrl}"
-          >
-          <div>
-            <span th:text="${newsItem.publishedAt}"></span>
-            <span class="article-metadata" th:if="${newsItem.author != null}" th:text="${' / ' + newsItem.author}"></span>
+
+  <aside class="remote">
+    <button class="date-button"
+            th:each="snapshotDate : ${pageViewModel.getSnapshotDates()}"
+            th:classappend="${pageViewModel.getSelectedDate().equals(snapshotDate)
+            ? 'selected' : ''}"
+            th:text="${snapshotDate.equals(T(java.time.LocalDate).now())
+            ? 'Today'
+            : #temporals.format(snapshotDate, 'M.d (EEE)')}"></button>
+  </aside>
+
+  <div class="article-column">
+    <div th:each="sectionViewModel : ${pageViewModel.getSectionViewModels}">
+      <div class="section-title" th:text="${sectionViewModel.section}">Section</div>
+      <div
+          class="source-container"
+          th:each="newsSourceViewModel : ${sectionViewModel.newsSourceViewModels}">
+        <div class="source-title" th:text="${newsSourceViewModel.sourceName}">SourceName</div>
+        <div class="news-list">
+          <div
+              class="news-item"
+              th:each="newsItem:${newsSourceViewModel.newsItems}">
+            <div>
+              <a th:href="${newsItem.link}" th:text="${newsItem.title}"></a>
+            </div>
+            <img style="width: 300px;
+             height: 180px;
+             object-fit: cover;"
+                 th:alt="${newsItem.title}"
+                 th:if="${newsItem.imageUrl != null}"
+                 th:src="${newsItem.imageUrl}"
+            >
+            <div>
+              <span th:text="${newsItem.publishedAt}"></span>
+              <span class="article-metadata" th:if="${newsItem.author != null}"
+                    th:text="${' / ' + newsItem.author}"></span>
+            </div>
           </div>
         </div>
+        <button class="news-toggle">Show More</button>
       </div>
-      <button class="news-toggle">Show More</button>
     </div>
   </div>
 </main>
@@ -1446,9 +1496,11 @@ public class JtbcEconomySource implements NewsSource {
 package com.biehn.personal.news_reader.controller;
 
 import com.biehn.personal.news_reader.service.NewsService;
+import java.time.LocalDate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 public class NewsController {
@@ -1459,9 +1511,10 @@ public class NewsController {
   }
 
   @GetMapping("/news")
-  public String news(Model model) throws Exception{
+  public String news(Model model,
+      @RequestParam(value = "date", required = false) LocalDate localDate) throws Exception{
     newsService.syncNews();
-    model.addAttribute("sectionViewModels",newsService.getNews());
+    model.addAttribute("pageViewModel",newsService.getNewsPage(localDate));
     return "news";
   }
 }
@@ -1512,7 +1565,40 @@ public class SectionViewModel {
     return newsSourceViewModels;
   }
 }
-./main/java/com/biehn/personal/news_reader/model/NewsItem.java
+./main/java/com/biehn/personal/news_reader/model/PageViewModel.java
+package com.biehn.personal.news_reader.model;
+
+import java.time.LocalDate;
+import java.util.List;
+
+public class PageViewModel {
+
+  private final List<SectionViewModel> sectionViewModels;
+  private final LocalDate selectedDate;
+  private final List<LocalDate> snapshotDates;
+
+  public PageViewModel(List<SectionViewModel> sectionViewModels, LocalDate selectedDate,
+      List<LocalDate> snapshotDates) {
+    this.sectionViewModels = sectionViewModels;
+    this.selectedDate = selectedDate;
+    this.snapshotDates = snapshotDates;
+  }
+
+  // getter for thymeleaf
+
+
+  public List<SectionViewModel> getSectionViewModels() {
+    return sectionViewModels;
+  }
+
+  public LocalDate getSelectedDate() {
+    return selectedDate;
+  }
+
+  public List<LocalDate> getSnapshotDates() {
+    return snapshotDates;
+  }
+}./main/java/com/biehn/personal/news_reader/model/NewsItem.java
 package com.biehn.personal.news_reader.model;
 
 import jakarta.persistence.Lob;
@@ -1590,6 +1676,7 @@ import com.biehn.personal.news_reader.entity.SnapshotEntity;
 import com.biehn.personal.news_reader.entity.SourceEntity;
 import com.biehn.personal.news_reader.model.NewsItem;
 import com.biehn.personal.news_reader.model.NewsSourceViewModel;
+import com.biehn.personal.news_reader.model.PageViewModel;
 import com.biehn.personal.news_reader.model.SectionViewModel;
 import com.biehn.personal.news_reader.repository.ArticleRepository;
 import com.biehn.personal.news_reader.repository.ArticleSnapshotRepository;
@@ -1604,7 +1691,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -1851,15 +1937,11 @@ public class NewsService {
 
     // InputSource
     InputSource inputSource = new InputSource(new StringReader(xml));
-    Document doc = builder.parse(inputSource);
-    return doc;
+    return builder.parse(inputSource);
   }
 
   // getNews(), read DB
-  public List<SectionViewModel> getNews() {
-    LocalDate today = LocalDate.now();
-    Optional<SnapshotEntity> optionalSnapshotEntity = snapshotRepository.findByCollectedDate(today);
-    SnapshotEntity snapshotEntity = optionalSnapshotEntity.get();
+  public List<SectionViewModel> getNews(SnapshotEntity snapshotEntity) {
     List<ArticleSnapshotEntity> articleSnapshotEntities = articleSnapshotRepository.findBySnapshot(
         snapshotEntity);
 
@@ -1898,13 +1980,12 @@ public class NewsService {
 
     List<Entry<SourceId, List<NewsItem>>> entryList = new ArrayList<>(entries);
     Map<SourceId, SourceConfig> configMap = buildConfigLookup();
-    Comparator<Entry<SourceId, List<NewsItem>>> entryListComparator = Comparator.comparingInt((entry) -> {
-      SourceConfig sourceConfig = configMap.get(entry.getKey());
-      return sourceConfig.getDisplayOrder();
-    });
+    Comparator<Entry<SourceId, List<NewsItem>>> entryListComparator = Comparator.comparingInt(
+        (entry) -> {
+          SourceConfig sourceConfig = configMap.get(entry.getKey());
+          return sourceConfig.getDisplayOrder();
+        });
     entryList.sort(entryListComparator);
-
-
 
     Map<Section, List<NewsSourceViewModel>> collectedNewsSourceViewModelsBySection = new HashMap<>();
     for (Entry<SourceId, List<NewsItem>> entry : entryList) {
@@ -1935,17 +2016,52 @@ public class NewsService {
 
     // sort Section
     Map<Section, SectionConfig> sectionConfigMap = buildSectionConfigLookup();
-    Comparator<SectionViewModel> sectionViewModelComparator = Comparator.comparingInt((sectionViewModel) -> {
-      SectionConfig sectionConfig = sectionConfigMap.get(sectionViewModel.getSection());
-      return sectionConfig.getDisplayOrder();
-    });
+    Comparator<SectionViewModel> sectionViewModelComparator = Comparator.comparingInt(
+        (sectionViewModel) -> {
+          SectionConfig sectionConfig = sectionConfigMap.get(sectionViewModel.getSection());
+          return sectionConfig.getDisplayOrder();
+        });
 
     sectionViewModels.sort(sectionViewModelComparator);
     return sectionViewModels;
   }
 
 
+  // getNewsPage
+  public PageViewModel getNewsPage(LocalDate requestedDate) {
+
+    LocalDate selectedDate = requestedDate == null ? LocalDate.now() : requestedDate;
+    Optional<SnapshotEntity> optionalSnapshotEntity = snapshotRepository.findByCollectedDate(
+        selectedDate);
+    SnapshotEntity snapshotEntity = optionalSnapshotEntity.get();
+
+    // PageViewModel(selectedDate, sectionViewModels, snapshotDates
+    List<SectionViewModel> sectionViewModels = getNews(snapshotEntity);
+
+    List<LocalDate> snapshotDates = new ArrayList<>();
+    List<SnapshotEntity> snapshotEntities = snapshotRepository.findAll();
+    for (SnapshotEntity entity : snapshotEntities) {
+      snapshotDates.add(entity.getCollectedDate());
+    }
+    snapshotDates.sort(Comparator.reverseOrder());
+
+    return new PageViewModel(sectionViewModels, selectedDate, snapshotDates);
+  }
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ./main/java/com/biehn/personal/news_reader/sketch/Ordering.md

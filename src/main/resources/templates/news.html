@@ -10,33 +10,47 @@
 <body>
 
 <main class="page-container">
-  <div th:each="sectionViewModel : ${sectionViewModels}">
-    <div class="section-title" th:text="${sectionViewModel.section}">Section</div>
-    <div
-        class="source-container"
-        th:each="newsSourceViewModel : ${sectionViewModel.newsSourceViewModels}">
-      <div class="source-title" th:text="${newsSourceViewModel.sourceName}">SourceName</div>
-      <div class="news-list">
-        <div
-            class="news-item"
-            th:each="newsItem:${newsSourceViewModel.newsItems}">
-          <div>
-            <a th:href="${newsItem.link}" th:text="${newsItem.title}"></a>
-          </div>
-          <img style="width: 300px;
-         height: 180px;
-         object-fit: cover;"
-               th:alt="${newsItem.title}"
-               th:if="${newsItem.imageUrl != null}"
-               th:src="${newsItem.imageUrl}"
-          >
-          <div>
-            <span th:text="${newsItem.publishedAt}"></span>
-            <span class="article-metadata" th:if="${newsItem.author != null}" th:text="${' / ' + newsItem.author}"></span>
+
+  <aside class="remote">
+    <button class="date-button"
+            th:each="snapshotDate : ${pageViewModel.getSnapshotDates()}"
+            th:classappend="${pageViewModel.getSelectedDate().equals(snapshotDate)
+            ? 'selected' : ''}"
+            th:text="${snapshotDate.equals(T(java.time.LocalDate).now())
+            ? 'Today'
+            : #temporals.format(snapshotDate, 'M.d (EEE)')}"></button>
+  </aside>
+
+  <div class="article-column">
+    <div th:each="sectionViewModel : ${pageViewModel.getSectionViewModels}">
+      <div class="section-title" th:text="${sectionViewModel.section}">Section</div>
+      <div
+          class="source-container"
+          th:each="newsSourceViewModel : ${sectionViewModel.newsSourceViewModels}">
+        <div class="source-title" th:text="${newsSourceViewModel.sourceName}">SourceName</div>
+        <div class="news-list">
+          <div
+              class="news-item"
+              th:each="newsItem:${newsSourceViewModel.newsItems}">
+            <div>
+              <a th:href="${newsItem.link}" th:text="${newsItem.title}"></a>
+            </div>
+            <img style="width: 300px;
+             height: 180px;
+             object-fit: cover;"
+                 th:alt="${newsItem.title}"
+                 th:if="${newsItem.imageUrl != null}"
+                 th:src="${newsItem.imageUrl}"
+            >
+            <div>
+              <span th:text="${newsItem.publishedAt}"></span>
+              <span class="article-metadata" th:if="${newsItem.author != null}"
+                    th:text="${' / ' + newsItem.author}"></span>
+            </div>
           </div>
         </div>
+        <button class="news-toggle">Show More</button>
       </div>
-      <button class="news-toggle">Show More</button>
     </div>
   </div>
 </main>

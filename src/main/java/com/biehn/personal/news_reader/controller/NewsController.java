@@ -19,7 +19,7 @@ public class NewsController {
   public String news(Model model,
       @RequestParam(value = "date", required = false) LocalDate localDate) throws Exception{
     newsService.syncNews();
-    model.addAttribute("sectionViewModels",newsService.getNews());
+    model.addAttribute("pageViewModel",newsService.getNewsPage(localDate));
     return "news";
   }
 }
