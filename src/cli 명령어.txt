@@ -1,1 +1,0 @@
-find . \( -name "*.java" -o -name "*.html" -o -name "*.md" -o -name "*.yml" -o -name "*.css" -o -name "*.js" \) -print -exec cat {} \; > source.txt

@@ -11,6 +11,7 @@ import com.biehn.personal.news_reader.entity.SnapshotEntity;
 import com.biehn.personal.news_reader.entity.SourceEntity;
 import com.biehn.personal.news_reader.model.NewsItem;
 import com.biehn.personal.news_reader.model.NewsSourceViewModel;
+import com.biehn.personal.news_reader.model.PageViewModel;
 import com.biehn.personal.news_reader.model.SectionViewModel;
 import com.biehn.personal.news_reader.repository.ArticleRepository;
 import com.biehn.personal.news_reader.repository.ArticleSnapshotRepository;
@@ -25,7 +26,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -272,15 +272,11 @@ public class NewsService {
 
     // InputSource
     InputSource inputSource = new InputSource(new StringReader(xml));
-    Document doc = builder.parse(inputSource);
-    return doc;
+    return builder.parse(inputSource);
   }
 
   // getNews(), read DB
-  public List<SectionViewModel> getNews() {
-    LocalDate today = LocalDate.now();
-    Optional<SnapshotEntity> optionalSnapshotEntity = snapshotRepository.findByCollectedDate(today);
-    SnapshotEntity snapshotEntity = optionalSnapshotEntity.get();
+  public List<SectionViewModel> getNews(SnapshotEntity snapshotEntity) {
     List<ArticleSnapshotEntity> articleSnapshotEntities = articleSnapshotRepository.findBySnapshot(
         snapshotEntity);
 
@@ -319,13 +315,12 @@ public class NewsService {
 
     List<Entry<SourceId, List<NewsItem>>> entryList = new ArrayList<>(entries);
     Map<SourceId, SourceConfig> configMap = buildConfigLookup();
-    Comparator<Entry<SourceId, List<NewsItem>>> entryListComparator = Comparator.comparingInt((entry) -> {
-      SourceConfig sourceConfig = configMap.get(entry.getKey());
-      return sourceConfig.getDisplayOrder();
-    });
+    Comparator<Entry<SourceId, List<NewsItem>>> entryListComparator = Comparator.comparingInt(
+        (entry) -> {
+          SourceConfig sourceConfig = configMap.get(entry.getKey());
+          return sourceConfig.getDisplayOrder();
+        });
     entryList.sort(entryListComparator);
-
-
 
     Map<Section, List<NewsSourceViewModel>> collectedNewsSourceViewModelsBySection = new HashMap<>();
     for (Entry<SourceId, List<NewsItem>> entry : entryList) {
@@ -356,16 +351,51 @@ public class NewsService {
 
     // sort Section
     Map<Section, SectionConfig> sectionConfigMap = buildSectionConfigLookup();
-    Comparator<SectionViewModel> sectionViewModelComparator = Comparator.comparingInt((sectionViewModel) -> {
-      SectionConfig sectionConfig = sectionConfigMap.get(sectionViewModel.getSection());
-      return sectionConfig.getDisplayOrder();
-    });
+    Comparator<SectionViewModel> sectionViewModelComparator = Comparator.comparingInt(
+        (sectionViewModel) -> {
+          SectionConfig sectionConfig = sectionConfigMap.get(sectionViewModel.getSection());
+          return sectionConfig.getDisplayOrder();
+        });
 
     sectionViewModels.sort(sectionViewModelComparator);
     return sectionViewModels;
   }
 
 
+  // getNewsPage
+  public PageViewModel getNewsPage(LocalDate requestedDate) {
+
+    LocalDate selectedDate = requestedDate == null ? LocalDate.now() : requestedDate;
+    Optional<SnapshotEntity> optionalSnapshotEntity = snapshotRepository.findByCollectedDate(
+        selectedDate);
+    SnapshotEntity snapshotEntity = optionalSnapshotEntity.get();
+
+    // PageViewModel(selectedDate, sectionViewModels, snapshotDates
+    List<SectionViewModel> sectionViewModels = getNews(snapshotEntity);
+
+    List<LocalDate> snapshotDates = new ArrayList<>();
+    List<SnapshotEntity> snapshotEntities = snapshotRepository.findAll();
+    for (SnapshotEntity entity : snapshotEntities) {
+      snapshotDates.add(entity.getCollectedDate());
+    }
+    snapshotDates.sort(Comparator.reverseOrder());
+
+    return new PageViewModel(sectionViewModels, selectedDate, snapshotDates);
+  }
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

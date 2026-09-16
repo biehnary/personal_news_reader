@@ -1,7 +1,3 @@
-1. Ordering
-    - Section 순서
-    - Source 순서
-
 2. Pagination
     - Snapshot 날짜 기준으로 이전/다음 페이지
     - getNews()를 특정 날짜 Snapshot 읽기로 확장
