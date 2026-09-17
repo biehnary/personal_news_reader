@@ -18,7 +18,6 @@ public class NewsController {
   @GetMapping("/news")
   public String news(Model model,
       @RequestParam(value = "date", required = false) LocalDate localDate) throws Exception{
-    newsService.syncNews();
     model.addAttribute("pageViewModel",newsService.getNewsPage(localDate));
     return "news";
   }
