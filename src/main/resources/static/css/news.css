@@ -21,7 +21,7 @@
   border-radius: 5px;
 }
 
-.date-button {
+.date-link {
   border: none;
   font-weight: lighter;
   font-size: 13px;
@@ -29,7 +29,7 @@
   color: lightgrey;
 }
 
-.date-button.selected {
+.date-link.selected {
   border: none;
   font-weight: lighter;
   font-size: 13px;

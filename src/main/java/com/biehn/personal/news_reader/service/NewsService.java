@@ -383,6 +383,13 @@ public class NewsService {
     return new PageViewModel(sectionViewModels, selectedDate, snapshotDates);
   }
 
+  // bootstrap method
+  public void syncOnStartupIfNeeded() {
+    if (snapshotRepository.findByCollectedDate(LocalDate.now()).isEmpty()) {
+      syncNews();
+    }
+  }
+
 }
 
 
