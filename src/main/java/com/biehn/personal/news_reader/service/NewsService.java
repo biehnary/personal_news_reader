@@ -281,9 +281,7 @@ public class NewsService {
         snapshotEntity);
 
     Map<SourceId, List<NewsItem>> collectedItemsBySourceId = new HashMap<>();
-    record SourceInfo(String sourceName, Section section) {
-
-    }
+    record SourceInfo(String sourceName, Section section) { }
     Map<SourceId, SourceInfo> sourceInfoLookup = new HashMap<>();
 
     for (ArticleSnapshotEntity articleSnapshotEntity : articleSnapshotEntities) {

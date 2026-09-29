@@ -36,7 +36,7 @@ class NewsReaderApplicationTests {
   border-radius: 5px;
 }
 
-.date-button {
+.date-link {
   border: none;
   font-weight: lighter;
   font-size: 13px;
@@ -44,7 +44,7 @@ class NewsReaderApplicationTests {
   color: lightgrey;
 }
 
-.date-button.selected {
+.date-link.selected {
   border: none;
   font-weight: lighter;
   font-size: 13px;
@@ -163,13 +163,14 @@ showButtons.forEach((showButton) => {
 <main class="page-container">
 
   <aside class="remote">
-    <button class="date-button"
-            th:each="snapshotDate : ${pageViewModel.getSnapshotDates()}"
-            th:classappend="${pageViewModel.getSelectedDate().equals(snapshotDate)
+    <a class="date-link"
+       th:classappend="${pageViewModel.getSelectedDate().equals(snapshotDate)
             ? 'selected' : ''}"
-            th:text="${snapshotDate.equals(T(java.time.LocalDate).now())
+       th:each="snapshotDate : ${pageViewModel.getSnapshotDates()}"
+       th:href="@{/news(date=${snapshotDate})}"
+       th:text="${snapshotDate.equals(T(java.time.LocalDate).now())
             ? 'Today'
-            : #temporals.format(snapshotDate, 'M.d (EEE)')}"></button>
+            : #temporals.format(snapshotDate, 'M.d (EEE)')}"></a>
   </aside>
 
   <div class="article-column">
@@ -183,21 +184,21 @@ showButtons.forEach((showButton) => {
           <div
               class="news-item"
               th:each="newsItem:${newsSourceViewModel.newsItems}">
-            <div>
-              <a th:href="${newsItem.link}" th:text="${newsItem.title}"></a>
-            </div>
-            <img style="width: 300px;
+            <a th:href="${newsItem.link}">
+              <div th:text="${newsItem.title}"></div>
+              <img style="width: 300px;
              height: 180px;
              object-fit: cover;"
-                 th:alt="${newsItem.title}"
-                 th:if="${newsItem.imageUrl != null}"
-                 th:src="${newsItem.imageUrl}"
-            >
-            <div>
-              <span th:text="${newsItem.publishedAt}"></span>
-              <span class="article-metadata" th:if="${newsItem.author != null}"
-                    th:text="${' / ' + newsItem.author}"></span>
-            </div>
+                   th:alt="${newsItem.title}"
+                   th:if="${newsItem.imageUrl != null}"
+                   th:src="${newsItem.imageUrl}"
+              >
+              <div>
+                <span th:text="${newsItem.publishedAt}"></span>
+                <span class="article-metadata" th:if="${newsItem.author != null}"
+                      th:text="${' / ' + newsItem.author}"></span>
+              </div>
+            </a>
           </div>
         </div>
         <button class="news-toggle">Show More</button>
@@ -266,8 +267,10 @@ package com.biehn.personal.news_reader;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
+@EnableScheduling
 public class NewsReaderApplication {
 
 	public static void main(String[] args) {
@@ -1513,7 +1516,6 @@ public class NewsController {
   @GetMapping("/news")
   public String news(Model model,
       @RequestParam(value = "date", required = false) LocalDate localDate) throws Exception{
-    newsService.syncNews();
     model.addAttribute("pageViewModel",newsService.getNewsPage(localDate));
     return "news";
   }
@@ -1662,6 +1664,32 @@ public class NewsItem {
         '}' + "\n";
   }
 }
+./main/java/com/biehn/personal/news_reader/NewsBootstrap.java
+package com.biehn.personal.news_reader;
+
+import com.biehn.personal.news_reader.service.NewsService;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Component;
+
+@Component
+public class NewsBootstrap {
+
+  private final NewsService newsService;
+
+  public NewsBootstrap(NewsService newsService) {
+    this.newsService = newsService;
+  }
+
+@EventListener(ApplicationReadyEvent.class)
+  public void startupSync() {
+    newsService.syncOnStartupIfNeeded();
+  }
+}
+
+
+
+
 ./main/java/com/biehn/personal/news_reader/service/NewsService.java
 package com.biehn.personal.news_reader.service;
 
@@ -2048,6 +2076,13 @@ public class NewsService {
     return new PageViewModel(sectionViewModels, selectedDate, snapshotDates);
   }
 
+  // bootstrap method
+  public void syncOnStartupIfNeeded() {
+    if (snapshotRepository.findByCollectedDate(LocalDate.now()).isEmpty()) {
+      syncNews();
+    }
+  }
+
 }
 
 
@@ -2064,6 +2099,29 @@ public class NewsService {
 
 
 
+./main/java/com/biehn/personal/news_reader/NewsScheduler.java
+package com.biehn.personal.news_reader;
+
+import com.biehn.personal.news_reader.service.NewsService;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+@Component
+public class NewsScheduler {
+
+  private final NewsService newsService;
+
+  public NewsScheduler(NewsService newsService) {
+    this.newsService = newsService;
+  }
+
+  @Scheduled(cron = "0 0 0,7,18 * * *")
+  public void triggerSync() {
+    newsService.syncNews();
+  }
+
+
+}
 ./main/java/com/biehn/personal/news_reader/sketch/Ordering.md
 application.yml
 news
