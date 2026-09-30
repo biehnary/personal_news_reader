@@ -381,7 +381,7 @@ model.addAttribute("pageViewModel", newsService.getNewsPage(localDate));
 화면은 신문을 연상시키는 흰 배경과 검은 텍스트 중심의 단순한 형태로 구성했다. 좌측에는 날짜를 선택할 수 있는 네비게이터를 배치하고 우측에 정렬된 기사 목록을 배치했다. 
 한눈에 헤드라인을 훑을 수 있도록 각 `Source` 기사의 노출을 2개로 제한했으며, 필요 시 펼치고 접을 수 있도록 만들었다.
 - 전체 레이아웃
-<img src="main.png" alt="메인 페이지" width="500">
+<img src="images/main.png" alt="메인 페이지" width="500">
   - 왼쪽 `aside.remote`에 날짜 네비게이터
   - 오른쪽 `article-column`에 `Section` → `Source` → `NewsItem` 순으로 출력
   - 기사 제목/이미지/발행일/작성자 표시
